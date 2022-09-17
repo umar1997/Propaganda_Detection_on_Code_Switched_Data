@@ -1,1 +1,1 @@
-# Sentiment_Analysis_on_Code_Switched_Data
+# Propaganda_Detection_on_Code_Switched_Data
