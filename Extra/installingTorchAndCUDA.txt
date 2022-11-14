@@ -1,0 +1,13 @@
+sudo apt install nvidia-cuda-toolkit
+
+nvcc --version
+
+https://pytorch.org/get-started/previous-versions/
+https://developer.nvidia.com/cuda-downloads?target_os=Linux&target_arch=x86_64
+
+# CUDA 10.2
+pip install torch==1.12.0+cu102 -f https://download.pytorch.org/whl/torch_stable.html
+
+
+# CUDA 11.3
+pip install torch==1.12.0+cu113 --extra-index-url https://download.pytorch.org/whl/cu113

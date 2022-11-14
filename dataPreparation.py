@@ -5,11 +5,11 @@ import pandas as pd
 from time import time
 from tqdm import tqdm
 
-class Dataset_Processing():
+class Dataset_Preparation():
     def __init__(self, paths):
         self.paths = paths
         self.files = [self.paths["Meme_Data_Train_Json"], self.paths["Meme_Data_Val_Json"], self.paths["Meme_Data_Test_Json"]]
-        self.techniques = self.read_techniques()
+        self.techniques = self.read_techniques(self.paths["Techniques"])
 
     
 
@@ -93,16 +93,16 @@ class Dataset_Processing():
                 for list_labels in example['labels']:
                     techniques.add(list_labels['technique'])
         techniques = dict(enumerate(techniques))
-        techniques = {y: x for x, y in techniques.items()}
+        techniques = {y: x+1 for x, y in techniques.items()}
 
         with open("techniques.json", "w") as fp:
             json.dump(techniques, fp, indent=4)
 
-    def read_techniques(self,):
+    def read_techniques(self, filename):
         """
         Read the techniques json file into a dictionary
         """
-        with open("techniques.json", "r") as fp:
+        with open(filename, "r") as fp:
             techniques = json.load(fp)
         
         return techniques
@@ -193,8 +193,6 @@ class Dataset_Processing():
             try:
                 start_index = text.index(tf)
             except:
-                print(i)
-                print(text)
                 raise Exception("No substring found!")
             end_index = start_index + len(tf)
             index_tuples.append((start_index, end_index))
@@ -243,6 +241,9 @@ class Dataset_Processing():
         return [text_fragment_list], [techniques], [text], [overlap_bool], [index], [no_labels]
 
     def get_non_overlap_df(self, df):
+        """
+        Get the new non overlapping dataframe.
+        """
         FRAGMENT, TECHNIQUE, TEXT, OVERLAP, INDEX, LABEL = [], [], [], [], [], []
 
         for i, f in df.iterrows():
@@ -271,11 +272,36 @@ class Dataset_Processing():
         dataframes_split = self.read_json_files_to_df()
         train_df, val_df, test_df = dataframes_split
 
+        print('Saving JSON files as Non-Overlapping CSV files.')
         for i, df_ in enumerate(dataframes_split):
             filename = self.files[i].split('/')[-1].split('.')[0]
             print('Saving {}...'.format(filename))
-            df_ = self.get_non_overlap_df(df_)
+            if i != 2:
+                df_final = self.get_non_overlap_df(df_)
+            else:
+                df_final = pd.DataFrame()
+                df_final['Fragment'] = df_['text_fragment']
+                df_final['Technique'] = df_['technique']
+                df_final['Text'] = df_['text']
             save_filename = self.paths['Meme_Data'] + filename + '.csv'
-            df_.to_csv(save_filename)
+            df_final.to_csv(save_filename)
 
         print('Saved successfully!')
+
+
+
+if __name__ == '__main__':
+    paths = {
+        "Meme_Data": "./Meme_Data/",
+        "Meme_Data_Train_Json": "./Meme_Data/training_set_.json",
+        "Meme_Data_Val_Json": "./Meme_Data/dev_set_.json",
+        "Meme_Data_Test_Json": "./Meme_Data/test_set_.json",
+        "Meme_Data_Train":"./Meme_Data/training_set_.csv",
+        "Meme_Data_Val":"./Meme_Data/dev_set_.csv",
+        "Meme_Data_Test":"./Meme_Data/test_set_.csv",
+        "Techniques":"./techniques.json",
+        "Log_Folder":"./Log_Files/"
+    }
+    
+    dataRaw = Dataset_Preparation(paths)
+    dataRaw.run()

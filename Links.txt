@@ -1,1 +1,39 @@
 Meme Data: https://github.com/di-dimitrov/SEMEVAL-2021-task6-corpus
+
+Papers
+####################
+Fine-Grained Analysis of Propaganda in News Articles
+https://aclanthology.org/D19-1565.pdf
+
+Detecting Propaganda Techniques in Memes
+https://aclanthology.org/2021.acl-long.516.pdf
+
+
+BERT
+####################
+https://datascience.stackexchange.com/questions/66207/what-is-purpose-of-the-cls-token-and-why-is-its-encoding-output-important
+https://datasciencetoday.net/index.php/en-us/nlp/211-paper-dissected-bert-pre-training-of-deep-bidirectional-transformers-for-language-understanding-explained
+
+
+https://jalammar.github.io/illustrated-transformer/
+https://jalammar.github.io/illustrated-bert/
+http://jalammar.github.io/a-visual-guide-to-using-bert-for-the-first-time/
+
+
+
+Token Classification
+####################
+https://huggingface.co/docs/transformers/tasks/token_classification
+https://www.kaggle.com/code/jonofields/bert-ner-sentence/notebook
+https://colab.research.google.com/github/NielsRogge/Transformers-Tutorials/blob/master/BERT/Custom_Named_Entity_Recognition_with_BERT_only_first_wordpiece.ipynb#scrollTo=cB9MR3KcWXUs
+
+
+Roman Urdu to English Translation
+####################
+https://translatiz.com/translation/roman-urdu-to-english
+https://cloud.google.com/translate/
+https://www.microsoft.com/en-us/translator/business/translator-api/
+https://translatiz.com/about-us
+
+
+nvidia-smi | grep 'python' | awk '{ print $5 }' | xargs -n1 kill -9
