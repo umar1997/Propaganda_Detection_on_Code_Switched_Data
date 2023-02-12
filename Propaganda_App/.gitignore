@@ -1,6 +1,3 @@
 **/__pycache__
-model_bert.pt
 PropagandaApp/Files/Dataset.csv
-PropagandaApp/model_files/
-PropagandaApp/Files/
-# Supplementary_Files/
+PropagandaApp/model_files/model_bert.pt
