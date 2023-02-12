@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ajax 1 - Basics</title>
+</head>
+<body>
+    <button id="button">
+        Get Text File
+    </button>
+    <div id="text">
+
+    </div>
+
+    <script>
+        // Create Event listener
+        document.getElementById('button')
+        .addEventListener('click', loadText);
+        // Here getting the element based on the id button and
+        // adding an event listener to it when the button is clicked on.
+        // LoadText is the fucntion that will be called when the button is clicked
+
+        // NEW WAY
+        function loadText(){
+            // console.log('Button clicked');
+
+            // Create XHR object (XMLHttpRequest Object)
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', 'sample.txt', true) 
+            // OPEN (Type - GET, Url/File, Async - True/False)
+
+            // Optional - Used for loaders (Loading a gif)
+            // xhr.onprogress = function(){
+            //     console.log('READY STATE: ', this.readyState)
+            // }
+
+            // Optional - Used for Errors
+            // xhr.onerror = function(){
+            //     console.log('Requesting Error...'')
+            // }
+
+            xhr.onload = function(){
+                // HTTP Status: 200 OK, 404 Not Found, 403 Forbidden
+                if(this.status == 200){ // Since in xhr object can use this
+                    // console.log(this.responseText) // Get the respsonse of the file
+                    document.getElementById('text').innerHTML = this.responseText;
+                }
+                else if(this.status == 404){
+                    document.getElementById('text').innerHTML = 'File Not Found';
+                }
+            }
+             // Sends request
+            xhr.send()
+        }
+
+        // OLD WAY
+        // function loadText() {
+        //     var xhr = new XMLHttpRequest();
+
+
+        //     xhr.open('GET', 'sample.txt', true)
+        //     console.log('READY STATE: ', xhr.readyState); // 1
+
+            
+        //     xhr.onreadystatechange = function(){
+        //         console.log('READY STATE: ', this.readyState); // 2 3 4
+        //         if(this.readyState == 4 && this.status == 200){ // onload won't run unless readyState is 4
+        //         console.log('READY STATE: ', this.readyState);
+        //             console.log(this.responseText);
+        //         }
+        //     }
+        //     // readyState values
+        //     // 0: request not initialized
+        //     // 1: server connection established
+        //     // 2: request received
+        //     // 3: processing request
+        //     // 4: request finshed and response is ready
+
+        //     xhr.send()
+
+        // }
+
+    </script>
+</body>
+</html>

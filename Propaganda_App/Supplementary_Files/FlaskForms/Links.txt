@@ -1,0 +1,2 @@
+https://www.digitalocean.com/community/tutorials/submitting-ajax-forms-with-jquery
+https://flask.palletsprojects.com/en/2.2.x/patterns/wtforms/

@@ -1,0 +1,19 @@
+Bootstrap
+https://getbootstrap.com/docs/4.0/components/
+https://getbootstrap.com/docs/5.0/getting-started/introduction/
+
+
+
+CSS (STYLE)
+------------
+<ul class="fruits">
+    <li> Apple </li>
+    <li> Bannana </li>
+</ul>
+
+<style>
+    .fruits li {
+        color: red;
+        font-size: 18px;
+    }
+</style>

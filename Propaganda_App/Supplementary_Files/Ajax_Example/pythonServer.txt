@@ -1,0 +1,5 @@
+https://www.digitalocean.com/community/tutorials/python-simplehttpserver-http-server
+python3 -m http.server 9000
+
+lsof -i:9000
+kill -9 $(lsof -t -i:9000)

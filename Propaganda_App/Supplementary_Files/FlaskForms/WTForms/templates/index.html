@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flask Forms Ajax</title>
+</head>
+<body>
+
+    <div>
+        <form action="{{ url_for('index') }}" method="POST">
+            {{ form.hidden_tag() }}
+            <div> {{ form.text.label }} </div>
+            <div id="inputText"> {{ form.text(type="text", placeholder="Enter sentence here") }} </div>
+            <div id="submitButton"> {{ form.submit }} </div>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('submitButton').addEventListener('submit', loadUsers);
+    
+        // Load Github Users
+        function loadUsers(){
+          var xhr = new XMLHttpRequest();
+          console.log(xhr)
+          xhr.open('POST', '/', true);
+    
+          xhr.onload = function(){
+            if(this.status == 200){
+              console.log(this.responseText)
+              // var users = JSON.parse(this.responseText);
+    
+              // var output = '';
+              // for(var i in users){
+              //   output +=
+              //     '<div class="user">' +
+              //     '<img src="'+users[i].avatar_url+'" width="70" height="70">' +
+              //     '<ul>' +
+              //     '<li>ID: '+users[i].id+'</li>' +
+              //     '<li>Login: '+users[i].login+'</li>' +
+              //     '</ul>' +
+              //     '</div>';
+              // }
+    
+              // document.getElementById('users').innerHTML = output;
+            }
+          }
+    
+          xhr.send();
+        }
+    </script>
+    
+</body>
+</html>

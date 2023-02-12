@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Practice AJAX</title>
+  </head>
+  <body>
+    <!-- <form action="index" method="post"> -->
+    <form action="index" method="post" id="postForm">
+      <label>Name:<input type="text" id="name" value="" /></label>
+      <input type="submit" value="Submit" id="'button1">
+      <!-- <button type="button" id="btn-post" onclick="do_ajax();">Click</button> -->
+    </form>
+    <div id="result"></div>
+    <script type="text/javascript">
+
+        document.getElementById('postForm').addEventListener('submit', do_ajax);
+
+        function do_ajax(e) {
+          e.preventDefault();
+          var req = new XMLHttpRequest();
+          var result = document.getElementById('result');
+
+          req.onload = function(){
+            if(this.status == 200){ 
+                result.innerHTML = this.responseText;
+              }
+          }
+  
+          req.open('POST', '/', true);
+          req.setRequestHeader('content-type', 'application/x-www-form-urlencoded;charset=UTF-8');
+          req.send("name=" + document.getElementById('name').value);
+        }
+      </script>
+  </body>
+</html>
