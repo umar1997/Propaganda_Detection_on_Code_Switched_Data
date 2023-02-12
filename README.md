@@ -1,1 +1,1 @@
-# Propaganda_Detection_on_Code_Switched_Data
+# Propaganda Detection on Code Switched Data
