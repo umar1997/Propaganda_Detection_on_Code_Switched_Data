@@ -188,7 +188,7 @@ if __name__ == '__main__':
     script = """
     python main.py \
         --model_run Bert_Softmax \
-        --training 
+        --training 1 \
         --model_type bert-base-cased \
         --tokenizer_type bert-base-cased \
         --max_seq_length 256 \

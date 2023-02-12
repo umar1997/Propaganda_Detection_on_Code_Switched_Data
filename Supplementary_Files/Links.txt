@@ -8,6 +8,8 @@ https://aclanthology.org/D19-1565.pdf
 Detecting Propaganda Techniques in Memes
 https://aclanthology.org/2021.acl-long.516.pdf
 
+A Survey of Current Datasets for Code-Switching Research
+https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9074205
 
 BERT
 ####################
@@ -35,5 +37,14 @@ https://cloud.google.com/translate/
 https://www.microsoft.com/en-us/translator/business/translator-api/
 https://translatiz.com/about-us
 
+
+Finetuning a Masked Language Model
+#######################
+https://huggingface.co/course/chapter7/3?fw=pt
+https://towardsdatascience.com/masked-language-modelling-with-bert-7d49793e5d2c
+https://datascience.stackexchange.com/questions/115267/fine-tuning-bert-without-pre-training-it-on-domain-specific-corpus
+https://towardsdatascience.com/how-to-train-a-bert-model-from-scratch-72cfce554fc6
+https://stackoverflow.com/questions/70939904/can-i-fine-tune-bert-using-only-masked-language-model-and-next-sentence-predicti
+https://www.analyticsvidhya.com/blog/2022/09/fine-tuning-bert-with-masked-language-modeling/
 
 nvidia-smi | grep 'python' | awk '{ print $5 }' | xargs -n1 kill -9
