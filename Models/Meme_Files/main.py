@@ -1,3 +1,10 @@
+from dataPreparation import Dataset_Preparation
+
+from Models.Bert_Softmax.dataProcessing import Data_Preprocessing
+from Models.Bert_Softmax.bertModel import Propaganda_Detection
+from Models.Bert_Softmax.training import Training
+from Models.Bert_Softmax.inference import Inferencer
+
 from log import get_logger
 
 import torch
@@ -6,19 +13,12 @@ import numpy as np
 import argparse
 from packaging import version
 
-from Model.training import Training
-from Model.model import Propaganda_Detection
-from dataPreparation import Dataset_Preparation
-
 import transformers
-from transformers import AutoTokenizer
+from transformers import AutoTokenizer, AutoModelForTokenClassification
 
 pytorch_version = version.parse(transformers.__version__)
 assert pytorch_version >= version.parse('3.0.0'), \
     'We now only support transformers version >=3.0.0, but your version is {}'.format(pytorch_version)
-
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-assert device == torch.device('cuda')
 
 if __name__ == '__main__':
 
@@ -58,19 +58,22 @@ if __name__ == '__main__':
                         help="valid values: LinearWarmup, LRonPlateau")
     parser.add_argument("--full_finetuning", default=1, type=int,
                         help="Update weights for all layers or finetune last classification layer")
-    parser.add_argument("--debugging", default=1, type=int,
-                        help="Debugging Mode")
+    parser.add_argument("--log_file", default='test.log', type=str,
+                        help="Name of log file.")
 
     global_args = parser.parse_args()
 
     paths = {
-            "Techniques":"./techniques.json",
-            "Log_Folder":"./Log_Files/",
-            "Model_Files":"./Model_Files/",
-            "Model_Selection":"./Model_Selection/",
-            "Training_Data": "./Data_Files/Splits/train_split.json",
-            "Validation_Data": "./Data_Files/Splits/val_split.json",
-            "Log_Folder":"./Log_Files/"
+        "Meme_Data": "./Meme_Data/",
+        "Meme_Data_Train_Json": "./Meme_Data/training_set_.json",
+        "Meme_Data_Val_Json": "./Meme_Data/dev_set_.json",
+        "Meme_Data_Test_Json": "./Meme_Data/test_set_.json",
+        "Meme_Data_Train":"./Meme_Data/training_set_.csv",
+        "Meme_Data_Val":"./Meme_Data/dev_set_.csv",
+        "Meme_Data_Test":"./Meme_Data/test_set_.csv",
+        "Techniques":"./techniques.json",
+        "Log_Folder":"./Log_Files/",
+        "Model_Files":"./Model_Files/",
     }
 
     hyper_params = {
@@ -90,11 +93,10 @@ if __name__ == '__main__':
         "optimizer": global_args.optimizer,
         "max_grad_norm": global_args.max_grad_norm,
         "full_finetuning": bool(global_args.full_finetuning),
-        "debugging": bool(global_args.debugging)
     }
 
 
-    
+
     ################################################## SEEDS
     seed = hyper_params['random_seed']
     torch.cuda.manual_seed_all(seed)
@@ -107,107 +109,83 @@ if __name__ == '__main__':
     
 
     ################################################## LOG FILE SET UP
-    
-    if not hyper_params["debugging"]:
-        file_name = paths['Log_Folder'] + hyper_params['model_run'] + date_time #global_args.log_file
-        logger_meta = get_logger(name='META', file_name=file_name, type='meta')
-        logger_progress = get_logger(name='PORGRESS', file_name=file_name, type='progress')
-        logger_results = get_logger(name='RESULTS', file_name=file_name, type='results')
-        for i, (k, v) in enumerate(hyper_params.items()):
-            if i == (len(hyper_params) - 1):
-                logger_meta.warning("{}: {}\n".format(k, v))
-            else:
-                logger_meta.warning("{}: {}".format(k, v))
-    else:
-        logger_meta = None
-        logger_progress = None
-        logger_results = None
+    file_name = paths['Log_Folder'] + hyper_params['model_run'] + date_time #global_args.log_file
+    logger_meta = get_logger(name='META', file_name=file_name, type='meta')
+    logger_progress = get_logger(name='PORGRESS', file_name=file_name, type='progress')
+    logger_results = get_logger(name='RESULTS', file_name=file_name, type='results')
+    for i, (k, v) in enumerate(hyper_params.items()):
+        if i == (len(hyper_params) - 1):
+            logger_meta.warning("{}: {}\n".format(k, v))
+        else:
+            logger_meta.warning("{}: {}".format(k, v))
 
 
-    ################################################## Models 
-
-    # 1. Translation with BERT trained on Memes
-    # 2. mBERT                                  'bert-base-multilingual-cased'
-    # 3. RUBERT
-    # 4. XLM RoBerta                            'xlm-roberta-base'
-    # 5. XLM RoBerta Roman Urdu fine-tuned      'Aimlab/xlm-roberta-roman-urdu-finetuned'
-
+    ################################################## 
+    checkpoint_model = hyper_params['model_type']
+    checkpoint_tokenizer = hyper_params['tokenizer_type']
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     assert device == torch.device('cuda')
 
-    techniques = Dataset_Preparation.read_techniques(paths['Techniques'])
 
-    checkpoint_model = hyper_params['model_type']
-    checkpoint_tokenizer = hyper_params['tokenizer_type']
-
-    # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< XLM RoBerta Roman Urdu >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    if hyper_params['model_run'] == 'XLM_RoBerta_Roman_Urdu':
-
+    # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< BERT SOFTMAX >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    if hyper_params['model_run'] == 'Bert_Softmax':
         ##################################################  MODEL + TOKENIZER
+        techniques = Data_Preprocessing.read_techniques(paths['Techniques'])
         if hyper_params['training']:
 
-            tokenizer = AutoTokenizer.from_pretrained(checkpoint_tokenizer, do_lower_case = False)
-            model = Propaganda_Detection(checkpoint_model=checkpoint_model, num_tags=len(techniques))
+            tokenizer = AutoTokenizer.from_pretrained(checkpoint_tokenizer, do_lower_case = True)
+            model = Propaganda_Detection(checkpoint_model=checkpoint_model, num_tags=len(techniques)+1) # Adding 'O' token
             model = model.to(device)
             print('##################################################')
-            if not hyper_params["debugging"]:
-                logger_progress.critical('Model + Tokenizer Initialized')
+            logger_progress.critical('Model + Tokenizer Initialized')
+
+            ##################################################  DATASET PREPARATION
+            # Use when need to generate the non overlapped .csv files from the .json files in Meme_Data folder
+            # dataRaw = Dataset_Preparation(paths)
+            # dataRaw.run()
 
             ##################################################  DATA PROCESSING
-            dataPrep = Dataset_Preparation(paths, tokenizer, hyper_params)
-            train_dataloader, valid_dataloader = dataPrep.run()
-            if not hyper_params["debugging"]:
-                logger_progress.critical('Tokenizing sentences and encoding labels')
-                logger_progress.critical('Data Loaders Created')
+            dataProcessed = Data_Preprocessing(paths, tokenizer, hyper_params)
+            train_dataloader, valid_dataloader, techniques = dataProcessed.run()
+            logger_progress.critical('Tokenizing sentences and encoding labels')
+            logger_progress.critical('Data Loaders Created')
 
 
             ##################################################  TRAINING
-            if not hyper_params["debugging"]:
-                logger_progress.critical('Training Started')
+            logger_progress.critical('Training Started')
             train = Training(paths, model, tokenizer, hyper_params, train_dataloader, valid_dataloader, techniques, logger_results)
             train.run()
-            if not hyper_params["debugging"]:
-                logger_progress.critical('Training Finished')
-                logger_progress.critical('Model Saved')
+            logger_progress.critical('Training Finished')
+            logger_progress.critical('Model Saved')
         else:
-            pass
             ################################################## INFERENCE
-            # print('##################################################')
-            # if not hyper_params["debugging"]:
-            #     logger_progress.critical('Starting Inference')
-            # inference = Inferencer(paths, checkpoint_tokenizer, checkpoint_model, hyper_params, techniques)
-            # macro_f1, micro_f1 = inference.run()
-            # if not hyper_params["debugging"]:
-            #     logger_results.info('Macro F1-Score | Micro F1-Score :  {} | {}'.format(macro_f1, micro_f1))
-            #     logger_progress.critical('Inference Ended')
+            print('##################################################')
+            logger_progress.critical('Starting Inference')
+            inference = Inferencer(paths, checkpoint_tokenizer, checkpoint_model, hyper_params, techniques)
+            macro_f1, micro_f1 = inference.run()
+            logger_results.info('Macro F1-Score | Micro F1-Score :  {} | {}'.format(macro_f1, micro_f1))
+            logger_progress.critical('Inference Ended')
     # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<                 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
+
+
+
+
+
+
+
+
     #----------------------------------------------------------------------------------
-    
-    # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    # print('Torch Version : ', torch.__version__)
-    # if device == torch.device('cuda'): print('CUDA Version  : ', torch.version.cuda)
-    # print('There are %d GPU(s) available.' % torch.cuda.device_count())
-    # print('We will use the GPU:', torch.cuda.get_device_name(0))
-
-
-    # bert-base-cased
-    # bert-base-multilingual-cased
-    # xlm-roberta-base
-    # Aimlab/xlm-roberta-roman-urdu-finetuned
-    
-    # nvidia-smi | grep 'python' | awk '{ print $5 }' | xargs -n1 kill -9
-
     script = """
     python main.py \
-        --model_run XLM_RoBerta_Roman_Urdu \
+        --model_run Bert_Softmax \
         --training 1 \
-        --model_type Aimlab/xlm-roberta-roman-urdu-finetuned \
-        --tokenizer_type Aimlab/xlm-roberta-roman-urdu-finetuned \
+        --model_type bert-base-cased \
+        --tokenizer_type bert-base-cased \
         --max_seq_length 256 \
-        --training_batch_size 2 \
-        --validation_batch_size 2 \
+        --training_batch_size 16 \
+        --validation_batch_size 16 \
         --learning_rate 5e-5 \
         --num_epochs 10 \
         --seed 42 \
@@ -216,6 +194,6 @@ if __name__ == '__main__':
         --optimizer AdamW \
         --scheduler LinearWarmup \
         --full_finetuning 1 \
-        --debugging 1
+        --added_layers 0 \
+        --log_file test.log
     """
-

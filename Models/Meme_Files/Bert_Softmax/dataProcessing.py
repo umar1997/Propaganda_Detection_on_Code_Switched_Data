@@ -62,8 +62,6 @@ class Data_Preprocessing:
         # We do this by padding all sequences to the same length, then using the “attention_mask” tensor to identify which tokens are padding
         # So it is not included in the num_tags for our model classes and the NLL looks at 0 to num_tags-1 classes so we need the 0 class to be a class the model predicts
 
-        # self.techniques[self.tokenizer.pad_token] = self.tokenizer.pad_token_id # 
-
         pad_token_id = -100
         self.techniques[self.tokenizer.pad_token] = pad_token_id
         self.techniques['O'] = 0
@@ -72,7 +70,7 @@ class Data_Preprocessing:
         # sep = [self.tokenizer.sep_token_id]
         input_ids = pad_sequences(
                             # cls + self.tokenizer.convert_tokens_to_ids(tokenized_txt) + sep
-                              [self.tokenizer.convert_tokens_to_ids(tokenized_txt)for tokenized_txt in tokenized_words_list], # converts tokens to ids
+                              [self.tokenizer.convert_tokens_to_ids(tokenized_txt) for tokenized_txt in tokenized_words_list], # converts tokens to ids
                              maxlen= self.hyper_params['max_seq_length'], dtype='long',value=0.0,
                              truncating='post',padding='post')
         tags = pad_sequences(

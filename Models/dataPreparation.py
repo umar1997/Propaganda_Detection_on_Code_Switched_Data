@@ -1,104 +1,24 @@
 import re
 import json
-import itertools
+import string 
 import pandas as pd
-from time import time
-from tqdm import tqdm
+import numpy as np
+
+import torch
+from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler
+from keras_preprocessing.sequence import pad_sequences
 
 class Dataset_Preparation():
-    def __init__(self, paths):
+    def __init__(self, paths, tokenizer, hyper_params):
         self.paths = paths
-        self.files = [self.paths["Meme_Data_Train_Json"], self.paths["Meme_Data_Val_Json"], self.paths["Meme_Data_Test_Json"]]
+        self.tokenizer = tokenizer
+        self.hyper_params = hyper_params
+        self.train_dataset = self.paths['Training_Data']
+        self.val_dataset = self.paths['Validation_Data']
         self.techniques = self.read_techniques(self.paths["Techniques"])
 
-    
-
-
-    ####################################################################################### HELPER FUNCTIONS
-
-    def isOverlap(self, a,b):
-        return a[0] <= b[0] <= a[1] or b[0] <= a[0] <= b[1]
-
-    def convertToListOfTuples(self, overlap_dict):
-        return [(k,v) for k, values in overlap_dict.items() for v in values]
-
-    def sortElementsInTuples(self, overlap_list):
-        return [(k,v) if k<v else (v,k) for k, v in overlap_list]
-
-    def removeDuplicates(self, overlap_list):
-        return [t for t in (set(tuple(i) for i in overlap_list))]
-
-    def getMaxValue(self, overlap_list):
-        return max(overlap_list, key=lambda tup: tup[1])[1]
-
-    def getTupleCombinations(self, numbered_array, max_value):
-        max_value = max_value + 1
-        all_combinations = []
-        for i in range(0,max_value):
-            all_combinations += list(itertools.combinations(numbered_array,i))
-        return all_combinations
-
-    def getNonOverlaps(self, tupleCombinations, overlap_list, max_value):
-        non_overlap_tuples = tupleCombinations[:]
-        unique_non_overlaps = []
-        for overlap in overlap_list:
-            for a_tuple in tupleCombinations:
-                if set(overlap).issubset(a_tuple):
-                    try:
-                        non_overlap_tuples.remove(a_tuple)
-                    except:
-                        continue
-        numbered_list = list(range(max_value+1))
-        for t in non_overlap_tuples:
-            if len(t) >= 2:
-                unique_non_overlaps += t
-        single_tuples = list(set(numbered_list) - set(unique_non_overlaps))
-        non_overlap_tuples = [t for t in non_overlap_tuples if len(t) >= 2]
-        for single in single_tuples:
-            non_overlap_tuples.append((single,))
-
-        new_non_overlap_tuples = non_overlap_tuples[:]
-        for old_t in new_non_overlap_tuples:
-            for new_t in new_non_overlap_tuples:
-                if old_t != new_t:
-                    if set(old_t).issubset(new_t):
-                        try:
-                            non_overlap_tuples.remove(old_t)
-                        except:
-                            continue
-        return non_overlap_tuples
-    
-    ##########################################################################################################
-
-    def get_data_splits(self,):
-        """
-        Print splits of training, validation and test data
-        """
-        for file in self.files :
-            with open(file, 'r') as f:
-                data = json.loads(f.read())
-        
-            print(file, len(data))
-
-    def save_techniques(self,):
-        """
-        Go over all the json files and save unique techniques in a json file
-        """
-        techniques = set()
-        for file in self.files :
-            with open(file, 'r') as f:
-                data = json.loads(f.read())
-
-            for example in data:
-                for list_labels in example['labels']:
-                    techniques.add(list_labels['technique'])
-        techniques = dict(enumerate(techniques))
-        techniques = {y: x+1 for x, y in techniques.items()}
-
-        with open("techniques.json", "w") as fp:
-            json.dump(techniques, fp, indent=4)
-
-    def read_techniques(self, filename):
+    @staticmethod
+    def read_techniques(filename):
         """
         Read the techniques json file into a dictionary
         """
@@ -106,202 +26,165 @@ class Dataset_Preparation():
             techniques = json.load(fp)
         
         return techniques
+    
 
     def clean_text(self, text):
-        text = text.replace('\n',' ')
-        text = text.replace('•', ' ')
-        text = text.replace('*', ' ')
-        text = text.replace('#', ' ')
+        """
+        Clean the text of data
+        """
+        punctuation_list  = string.punctuation  # !"#$%&'()*+,-./:;<=>?@[\]^_`{|}~
+        acceptable_list = "?\"\'().,!%"
+        remove_list = list(filter(lambda punctuation_list: punctuation_list[0] not in acceptable_list, punctuation_list))
+        remove_list.append('•')
+
+        text = text.replace('\n', ' ')
+        has_any_remove = any([char in remove_list for char in text])
+        if has_any_remove:
+            for r in remove_list:
+                if r in text:
+                    text = text.replace(r, ' ')
+        has_any_accept = any([char in acceptable_list for char in text])
+        if has_any_accept:
+            for a in acceptable_list:
+                if a in text and a not in "\"\'":
+                    text = re.sub(re.escape(a) + r"{2,}", a,text)
+                    text = text.replace(a, a+' ')
         text = re.sub(r' {2,}', ' ',text)
-        text = text.strip()
         return text
-    
-    def read_json_files_to_df(self,):
+
+    def read_json_files_to_df(self, json_file):
         """
         Read file from json format and convert into pandas datatframe.
         """
-        dataframes_split = []
-        for file in self.files :
-            with open(file, 'r') as f:
+        with open(json_file, 'r') as f:
                 data = json.loads(f.read())
-            
 
-            data_dict = dict()
+        data_dict = dict()
+        for i, (_, example) in enumerate(data.items()):
+            text = self.clean_text(example['text'])
+            list_labels = example['labels']
 
-            for i, example in enumerate(data):
-                text = self.clean_text(example['text'])
-                list_labels = example['labels']
-
-                data_dict[i] = {'text' : text, 'technique' : [], 'text_fragment' : []}
-                for label in list_labels:
-                    technique = label['technique']
-                    fragment = self.clean_text(label['text_fragment'])
-                    data_dict[i]['technique'].append(technique)
-                    data_dict[i]['text_fragment'].append(fragment)
+            data_dict[i] = {'text' : text, 'technique' : [], 'text_fragment' : []}
+            for label in list_labels:
+                technique = label['technique']
+                fragment = self.clean_text(label['text_fragment'])
+                if fragment not in text:
+                    raise Exception('Fragment cleaned different from text cleaned')
+                data_dict[i]['technique'].append(technique)
+                data_dict[i]['text_fragment'].append(fragment)
                 
                 assert len(data_dict[i]['technique']) == len (data_dict[i]['text_fragment'])
 
-            data_df = pd.DataFrame(data_dict).transpose()
-
-            dataframes_split.append(data_df)
-        
-        return dataframes_split
+        data_df = pd.DataFrame(data_dict).transpose()
+        return data_df
 
 
-    def check_overlap(self,i, f):
-        # Different overlap examples
-        # a, b  = (10, 20), (15, 25)
-        # a, b  = (5, 15), (10, 20)
-        # a, b  = (10, 20), (10, 20)
-        # a, b  = (15, 20), (10, 25)
-        """
-        Gives you possible combinations that dont overlap for e.g.
-        I will never concede! NO WAY IN HELL BIDEN WON!
-        ['I will never', 'never concede!', 'concede! NO', 'WAY IN', 'HELL BIDEN', 'BIDEN WON!']
-        [(1, 3, 4), (1, 3, 5), (0, 2, 3, 4), (0, 2, 3, 5)]
-        """
-        index = i
-        text = f['text']
-        text_fragment_list = f['text_fragment']
-        techniques = f['technique']
+    def tokenize_preserve(self, fragments, techniques, text):
+        assert len(fragments) == len(techniques)
+        tokenized_words = self.tokenizer.tokenize(text)
+        indices = [self.techniques[t] for t in techniques]
+        labels = np.zeros((20))
+        labels[indices] = 1
+        labels = labels.tolist()
 
-        no_labels = 1
-        if len(techniques) == 0:
-            no_labels = 0
+        return tokenized_words, labels
+            
 
-        overlap_bool = 0
-        assert len(text_fragment_list) == len(techniques)
 
-        # Case 44 in training set
-        # \n was labelled as Reductio ad hitlerum and when cleaning was done it changed to ''
-        if '' in text_fragment_list:
-            temp_fragment_list = [text_fragment_list[i] for i, txt in enumerate(text_fragment_list) if txt != '']
-            techniques = [techniques[i] for i, txt in enumerate(text_fragment_list) if txt != '']
-            text_fragment_list = temp_fragment_list
-            assert len(text_fragment_list) == len(techniques)
-
-        # Case 40 in val_set
-        # Because the repeated words were so many the indexing of the repeated words was going all wrong and was creating infinite combinations
-        if 'Repetition' in techniques:
-            text_fragment_list = [text_fragment_list[i] for i, tech in enumerate(techniques) if tech == 'Repetition']
-            techniques = ['Repetition']*len(text_fragment_list)
-            return [text_fragment_list], [techniques], [text], [overlap_bool], [index], [no_labels]
-
-        # Get list of tuples of indices
-        index_tuples = []
-        for tf in text_fragment_list:
-            try:
-                start_index = text.index(tf)
-            except:
-                raise Exception("No substring found!")
-            end_index = start_index + len(tf)
-            index_tuples.append((start_index, end_index))
-        
-        assert len(index_tuples) == len(text_fragment_list)
-
-        # Get indices of overlapping fragments
-        overlap_dict = dict()
-        for i, tf in enumerate(text_fragment_list):
-            for j, ind in enumerate(index_tuples):
-                if i == j: continue
-                else:
-                    if self.isOverlap(index_tuples[i], ind):
-                        try:
-                            overlap_dict[i].append(j)
-                        except:
-                            overlap_dict[i] = [j]
-
-        # Get non-overlapping indices combinations
-        overlap_list = self.convertToListOfTuples(overlap_dict)
-        overlap_list = self.sortElementsInTuples(overlap_list)
-        overlap_list = self.removeDuplicates(overlap_list)
-        if len(overlap_list) != 0:
-            max_value = self.getMaxValue(overlap_list)
-            numbered_array = list(range(0, max_value+1))
-            tupleCombinations = self.getTupleCombinations(numbered_array, max_value)
-            non_overlap = self.getNonOverlaps(tupleCombinations, overlap_list, max_value)
-        else:
-            non_overlap = []
-
-        # Get new non overlapping example
-        non_overlap_fragments, non_overlap_techniques = [], []
-        if len(non_overlap) != 0:
-            overlap_bool = 1
-            for example in non_overlap:
-                new_fragments, new_techniques = [], []
-                for i in example:
-                    new_fragments.append(text_fragment_list[i])
-                    new_techniques.append(techniques[i])
-                non_overlap_fragments.append(new_fragments)
-                non_overlap_techniques.append(new_techniques)
-
-            assert len(non_overlap_fragments), len(non_overlap_techniques)
-            return non_overlap_fragments, non_overlap_techniques, [text]*len(non_overlap_fragments), [overlap_bool]*len(non_overlap_fragments), [index]*len(non_overlap_fragments), [no_labels]*len(non_overlap_fragments)
-
-        return [text_fragment_list], [techniques], [text], [overlap_bool], [index], [no_labels]
-
-    def get_non_overlap_df(self, df):
-        """
-        Get the new non overlapping dataframe.
-        """
-        FRAGMENT, TECHNIQUE, TEXT, OVERLAP, INDEX, LABEL = [], [], [], [], [], []
-
+    def get_text_and_labels(self, df):
+        tokenized_words_list, labels_list = [], []
         for i, f in df.iterrows():
+            tokenized_words, labels = self.tokenize_preserve(f['text_fragment'], f['technique'], f['text'])
+            tokenized_words_list.append(tokenized_words)
+            labels_list.append(labels)
 
-            frag, tech, txt, overlap, index, labels  = self.check_overlap(i,f)
-            FRAGMENT += frag
-            TECHNIQUE += tech
-            TEXT += txt
-            OVERLAP += overlap
-            INDEX += index
-            LABEL += labels
+        assert len(tokenized_words_list) == len(labels_list)
+        return tokenized_words_list, labels_list
+
+    def get_encoded_data(self,tokenized_words_list, labels_list):
+        # The reason wecan't keep padding token as self.tokenizer.pad_token_id whose value is 0 is because then our tags or labels will have
+        # ['PAD']: 0, and when we are doing the attention mask we are making sure all ['PAD'] have an attention mask of 0
+        # Attention masks allow us to send a batch into the transformer even when the examples in the batch have varying lengths. 
+        # We do this by padding all sequences to the same length, then using the “attention_mask” tensor to identify which tokens are padding
+        # So it is not included in the num_tags for our model classes and the NLL looks at 0 to num_tags-1 classes so we need the 0 class to be a class the model predicts
+
+        pad_token_id = -100
+        self.techniques[self.tokenizer.pad_token] = pad_token_id
+        id2techniques = {v: k for k, v in self.techniques.items()}
+        # cls = [self.tokenizer.cls_token_id]
+        # sep = [self.tokenizer.sep_token_id]
+        input_ids = pad_sequences(
+                            [self.tokenizer.convert_tokens_to_ids(tokenized_txt) for tokenized_txt in tokenized_words_list], # converts tokens to ids
+                            maxlen= self.hyper_params['max_seq_length'], dtype='long',value=0.0,
+                            truncating='post',padding='post')
+        tags = labels_list
+        # tags = pad_sequences(
+        #                 labels_list, # Gets corresponding tag_id
+        #                 maxlen= self.hyper_params['max_seq_length'], dtype='long', value= pad_token_id,
+        #                 truncating='post',padding='post')
+
+        attention_masks = [[float(i !=0.0) for i in ii]for ii in input_ids] # Float(True) = 1.0 for attention for only non-padded inputs
+
+        assert len(input_ids) == len(attention_masks) # == len(tags)
+        for i in range(len(input_ids)):
+            assert len(input_ids[i]) == len(attention_masks[i]) # == len(tags[i])
+
+        return input_ids, tags, attention_masks
+    def convert_to_tensors(self,input_ids, tags, attention_masks):
+
+        input_ids, tag, masks = torch.tensor(input_ids), torch.tensor(tags), torch.tensor(attention_masks)
+        return input_ids, tag, masks
+
+    def data_loader(self,train_input_ids, train_tag, train_masks, val_input_ids, val_tag, val_masks):
 
 
-        df_x = pd.DataFrame()
-        df_x['Fragment'] = pd.Series(FRAGMENT)
-        df_x['Technique'] = pd.Series(TECHNIQUE)
-        df_x['Text'] = pd.Series(TEXT)
-        df_x['Overlap'] = pd.Series(OVERLAP)
-        df_x['Index'] = pd.Series(INDEX)
-        df_x['Label'] = pd.Series(LABEL)
+        train_data = TensorDataset(train_input_ids, train_masks, train_tag)
+        train_sampler = RandomSampler(train_data)
+        train_dataloader = DataLoader(train_data, sampler=train_sampler, batch_size=self.hyper_params['training_batch_size'])
 
-        return df_x
+        valid_data = TensorDataset(val_input_ids, val_masks, val_tag)
+        valid_sampler = SequentialSampler(valid_data)
+        valid_dataloader = DataLoader(valid_data, sampler=valid_sampler, batch_size=self.hyper_params['validation_batch_size'])
+
+        return train_dataloader, valid_dataloader 
 
     def run(self,):
-        
-        dataframes_split = self.read_json_files_to_df()
-        train_df, val_df, test_df = dataframes_split
 
-        print('Saving JSON files as Non-Overlapping CSV files.')
-        for i, df_ in enumerate(dataframes_split):
-            filename = self.files[i].split('/')[-1].split('.')[0]
-            print('Saving {}...'.format(filename))
-            if i != 2:
-                df_final = self.get_non_overlap_df(df_)
-            else:
-                df_final = pd.DataFrame()
-                df_final['Fragment'] = df_['text_fragment']
-                df_final['Technique'] = df_['technique']
-                df_final['Text'] = df_['text']
-            save_filename = self.paths['Meme_Data'] + filename + '.csv'
-            df_final.to_csv(save_filename)
+        train_df = self.read_json_files_to_df(self.train_dataset)
+        train_tokenized_words_list, train_labels_list = self.get_text_and_labels(train_df)
+        train_input_ids, train_tags, train_attention_masks = self.get_encoded_data(train_tokenized_words_list, train_labels_list)
+        train_input_ids, train_tag, train_masks = self.convert_to_tensors(train_input_ids, train_tags, train_attention_masks)
 
-        print('Saved successfully!')
+        val_df = self.read_json_files_to_df(self.val_dataset)
+        val_tokenized_words_list, val_labels_list = self.get_text_and_labels(val_df)
+        val_input_ids, val_tags, val_attention_masks = self.get_encoded_data(val_tokenized_words_list, val_labels_list)
+        val_input_ids, val_tag, val_masks = self.convert_to_tensors(val_input_ids, val_tags, val_attention_masks)
 
-
+        train_dataloader, valid_dataloader = self.data_loader(train_input_ids, train_tag, train_masks, val_input_ids, val_tag, val_masks)
+        return train_dataloader, valid_dataloader
 
 if __name__ == '__main__':
+
+    import transformers
+    from transformers import AutoTokenizer
+    checkpoint_tokenizer = 'Aimlab/xlm-roberta-roman-urdu-finetuned'
+    tokenizer = AutoTokenizer.from_pretrained(checkpoint_tokenizer, do_lower_case = False)
+
+
     paths = {
-        "Meme_Data": "./Meme_Data/",
-        "Meme_Data_Train_Json": "./Meme_Data/training_set_.json",
-        "Meme_Data_Val_Json": "./Meme_Data/dev_set_.json",
-        "Meme_Data_Test_Json": "./Meme_Data/test_set_.json",
-        "Meme_Data_Train":"./Meme_Data/training_set_.csv",
-        "Meme_Data_Val":"./Meme_Data/dev_set_.csv",
-        "Meme_Data_Test":"./Meme_Data/test_set_.csv",
-        "Techniques":"./techniques.json",
-        "Log_Folder":"./Log_Files/"
+            "Techniques":"./techniques.json",
+            "Log_Folder":"./Log_Files/",
+            "Model_Files":"./Model_Files/",
+            "Model_Selection":"./Model_Selection/",
+            "Training_Data": "./Data_Files/Splits/train_split.json",
+            "Validation_Data": "./Data_Files/Splits/val_split.json",
     }
-    
-    dataRaw = Dataset_Preparation(paths)
-    dataRaw.run()
+
+    hyper_params = {
+        'training_batch_size' : 16,
+        'validation_batch_size': 16,
+        'max_seq_length' : 256,
+    }
+
+    dataPrep = Dataset_Preparation(paths, tokenizer, hyper_params)
+    dataPrep.run()

@@ -11,6 +11,14 @@ https://aclanthology.org/2021.acl-long.516.pdf
 A Survey of Current Datasets for Code-Switching Research
 https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9074205
 
+
+
+
+
+BASICS OF BERT AND XLM ROBERTA
+################################
+https://www.kaggle.com/code/vbookshelf/basics-of-bert-and-xlm-roberta-pytorch
+
 BERT
 ####################
 https://datascience.stackexchange.com/questions/66207/what-is-purpose-of-the-cls-token-and-why-is-its-encoding-output-important

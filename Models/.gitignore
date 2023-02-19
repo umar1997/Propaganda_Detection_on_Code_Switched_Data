@@ -1,5 +1,6 @@
 **/__pycache__
-data/
-Meme_Data/
-Model_Files/
+Meme_Files/data/
+Meme_Files/Meme_Data/
+Meme_Files/Meme_Model/
 Log_Files/
+Data_Files/
