@@ -1,66 +1,86 @@
+import pandas as pd
+from tqdm import tqdm
 from google.cloud import translate
 
-class Translate:
 
-    def __init__(self,):
-        pass
+def get_language_codes():
+    parent = f"projects/roman-urdu-translation-api"
+    client = translate.TranslationServiceClient()
 
-    def get_language_codes(self,):
-        parent = f"projects/roman-urdu-translation-api"
-        client = translate.TranslationServiceClient()
+    response = client.get_supported_languages(parent=parent, display_language_code="en")
+    languages = response.languages
 
-        response = client.get_supported_languages(parent=parent, display_language_code="en")
-        languages = response.languages
+    print(f" Languages: {len(languages)} ".center(60, "-"))
+    for language in languages:
+        print(f"{language.language_code}\t{language.display_name}")
 
-        print(f" Languages: {len(languages)} ".center(60, "-"))
-        for language in languages:
-            print(f"{language.language_code}\t{language.display_name}")
+def translate_text(text):
 
-    def translate_text(self, text):
+    parent = f"projects/roman-urdu-translation-api"
+    client = translate.TranslationServiceClient()
 
-        parent = f"projects/roman-urdu-translation-api"
-        client = translate.TranslationServiceClient()
+    
+    # Romanian to Urdu
+    response = client.translate_text(
+        request={
+            "parent": parent,
+            "contents": [text],
+            "mime_type": "text/plain",
+            "source_language_code": "ro",
+            "target_language_code": "ur",
+        }
+    )
 
-        
-        # Romanian to Urdu
-        response = client.translate_text(
-            request={
-                "parent": parent,
-                "contents": [self.text],
-                "mime_type": "text/plain",
-                "source_language_code": "ro",
-                "target_language_code": "ur",
-            }
-        )
+    for translation in response.translations:
+        # print("Translated text: {}".format(translation.translated_text))
+        text = translation.translated_text
 
-        for translation in response.translations:
-            # print("Translated text: {}".format(translation.translated_text))
-            text = translation.translated_text
+    response = client.translate_text(
+        request={
+            "parent": parent,
+            "contents": [text],
+            "mime_type": "text/plain",
+            "source_language_code": "ur",
+            "target_language_code": "en-US",
+        }
+    )
 
-        response = client.translate_text(
-            request={
-                "parent": parent,
-                "contents": [self.text],
-                "mime_type": "text/plain",
-                "source_language_code": "ur",
-                "target_language_code": "en-US",
-            }
-        )
+    for translation in response.translations:
+        # print("Translated text: {}".format(translation.translated_text))
+        final_text = translation.translated_text
 
-        for translation in response.translations:
-            print("Translated text: {}".format(translation.translated_text))
+    return final_text
 
-        return translation.translated_text
+
+def apply_translate(df):
+    df['TRANSLATED'] = ""
+    for i, f in tqdm(df.iterrows()):
+        try:
+            tr_text = translate_text(f['TEXT'])
+            df.at[i, 'TRANSLATED'] = tr_text
+        except Exception as e:
+            print(i)
+            print(e)
+    
+    return df
+
 
 
 if __name__ == '__main__':
-    tr = Translate()
-    example_text = "kuch bhi nai ho raha"
-    translated_text = tr.translate_text(example_text)
+
+    df = pd.read_csv('Dataset.csv')
+    final_df = apply_translate(df)
+    final_df.to_csv('Translated_dataset.csv' ,index=False)
+    
+
+    # example_text = "kuch bhi nai ho raha"
+    # translated_text = translate_text(example_text)
+    # print(translated_text)
     # get_language_codes()
 
 
-
+##################### SET UP API #####################
+#-----------------------------------------------------
 # Link to help: https://codelabs.developers.google.com/codelabs/cloud-translation-python3#3
 # Create a Project
 # Project ID = roman-urdu-translation-api (Can get this at the start while creating the project or running "gcloud config get-value core/project" in the cloud shell)
