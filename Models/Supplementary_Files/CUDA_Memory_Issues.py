@@ -27,3 +27,6 @@ import torch
 
 # nvidia-smi
 # nvidia-smi | grep 'python' | awk '{ print $5 }' | xargs -n1 kill -9
+
+
+nvidia-smi | grep 'Default' | awk '{ print $9 " out of "  $11 " - GPU Util: " $13}'

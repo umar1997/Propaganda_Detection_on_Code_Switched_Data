@@ -1,5 +1,6 @@
 from log import get_logger
 
+import os
 import torch
 import numpy as np
 
@@ -63,6 +64,14 @@ if __name__ == '__main__':
 
     global_args = parser.parse_args()
 
+    LogFileExist = os.path.exists(os.getcwd() + '/Log_Files')
+    ModelFileExist = os.path.exists(os.getcwd() + '/Model_Files')
+    if not LogFileExist:
+        os.makedirs(os.getcwd() + '/Log_Files')
+    if not ModelFileExist:
+        os.makedirs(os.getcwd() + '/Model_Files')
+
+
     paths = {
             "Techniques":"./techniques.json",
             "Log_Folder":"./Log_Files/",
@@ -90,7 +99,9 @@ if __name__ == '__main__':
         "optimizer": global_args.optimizer,
         "max_grad_norm": global_args.max_grad_norm,
         "full_finetuning": bool(global_args.full_finetuning),
-        "debugging": bool(global_args.debugging)
+        "debugging": bool(global_args.debugging),
+        "log_file": None,
+        "datetime": None
     }
 
 
@@ -104,12 +115,14 @@ if __name__ == '__main__':
     from datetime import datetime
     current_datetime = datetime.now()
     date_time = current_datetime.strftime("%d-%m-%Y_%H:%M:%S")
+    hyper_params['datetime'] = date_time
     
 
     ################################################## LOG FILE SET UP
     
     if not hyper_params["debugging"]:
-        file_name = paths['Log_Folder'] + hyper_params['model_run'] + date_time #global_args.log_file
+        file_name = paths['Log_Folder'] + hyper_params['model_run'] + '-' + date_time #global_args.log_file
+        hyper_params['log_file'] = file_name
         logger_meta = get_logger(name='META', file_name=file_name, type='meta')
         logger_progress = get_logger(name='PORGRESS', file_name=file_name, type='progress')
         logger_results = get_logger(name='RESULTS', file_name=file_name, type='results')
@@ -138,12 +151,18 @@ if __name__ == '__main__':
 
     techniques = Dataset_Preparation.read_techniques(paths['Techniques'])
 
-    checkpoint_model = hyper_params['model_type']
-    checkpoint_tokenizer = hyper_params['tokenizer_type']
+
+
+
+
+
+
+
 
     # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< XLM RoBerta Roman Urdu >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     if hyper_params['model_run'] == 'XLM_RoBerta_Roman_Urdu':
-
+        checkpoint_model = hyper_params['model_type'] = 'Aimlab/xlm-roberta-roman-urdu-finetuned'
+        checkpoint_tokenizer = hyper_params['tokenizer_type'] = 'Aimlab/xlm-roberta-roman-urdu-finetuned'
         ##################################################  MODEL + TOKENIZER
         if hyper_params['training']:
 
@@ -183,6 +202,79 @@ if __name__ == '__main__':
             #     logger_progress.critical('Inference Ended')
     # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<                 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Multilingual_BERT >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    if hyper_params['model_run'] == 'Multilingual_BERT':
+        checkpoint_model = hyper_params['model_type'] = 'bert-base-multilingual-cased'
+        checkpoint_tokenizer = hyper_params['tokenizer_type'] = 'bert-base-multilingual-cased'
+        ##################################################  MODEL + TOKENIZER
+        if hyper_params['training']:
+
+            tokenizer = AutoTokenizer.from_pretrained(checkpoint_tokenizer, do_lower_case = False)
+            model = Propaganda_Detection(checkpoint_model=checkpoint_model, num_tags=len(techniques))
+            model = model.to(device)
+            print('##################################################')
+            if not hyper_params["debugging"]:
+                logger_progress.critical('Model + Tokenizer Initialized')
+
+            ##################################################  DATA PROCESSING
+            dataPrep = Dataset_Preparation(paths, tokenizer, hyper_params)
+            train_dataloader, valid_dataloader = dataPrep.run()
+            if not hyper_params["debugging"]:
+                logger_progress.critical('Tokenizing sentences and encoding labels')
+                logger_progress.critical('Data Loaders Created')
+
+
+            ##################################################  TRAINING
+            if not hyper_params["debugging"]:
+                logger_progress.critical('Training Started')
+            train = Training(paths, model, tokenizer, hyper_params, train_dataloader, valid_dataloader, techniques, logger_results)
+            train.run()
+            if not hyper_params["debugging"]:
+                logger_progress.critical('Training Finished')
+                logger_progress.critical('Model Saved')
+        else:
+            pass
+            ################################################## INFERENCE
+            # print('##################################################')
+            # if not hyper_params["debugging"]:
+            #     logger_progress.critical('Starting Inference')
+            # inference = Inferencer(paths, checkpoint_tokenizer, checkpoint_model, hyper_params, techniques)
+            # macro_f1, micro_f1 = inference.run()
+            # if not hyper_params["debugging"]:
+            #     logger_results.info('Macro F1-Score | Micro F1-Score :  {} | {}'.format(macro_f1, micro_f1))
+            #     logger_progress.critical('Inference Ended')
+    # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<                 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     #----------------------------------------------------------------------------------
     
     # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -192,10 +284,11 @@ if __name__ == '__main__':
     # print('We will use the GPU:', torch.cuda.get_device_name(0))
 
 
-    # bert-base-cased
-    # bert-base-multilingual-cased
-    # xlm-roberta-base
-    # Aimlab/xlm-roberta-roman-urdu-finetuned
+    # BERT                              bert-base-cased
+    # Multilingual_BERT                 bert-base-multilingual-cased
+    # RuBERT
+    # XLM_RoBerta                       xlm-roberta-base
+    # XLM_RoBerta_Roman_Urdu            Aimlab/xlm-roberta-roman-urdu-finetuned
     
     # nvidia-smi | grep 'python' | awk '{ print $5 }' | xargs -n1 kill -9
 
@@ -203,11 +296,11 @@ if __name__ == '__main__':
     python main.py \
         --model_run XLM_RoBerta_Roman_Urdu \
         --training 1 \
-        --model_type Aimlab/xlm-roberta-roman-urdu-finetuned \
-        --tokenizer_type Aimlab/xlm-roberta-roman-urdu-finetuned \
+        --model_type default \
+        --tokenizer_type default \
         --max_seq_length 256 \
-        --training_batch_size 2 \
-        --validation_batch_size 2 \
+        --training_batch_size 12 \
+        --validation_batch_size 12 \
         --learning_rate 5e-5 \
         --num_epochs 10 \
         --seed 42 \

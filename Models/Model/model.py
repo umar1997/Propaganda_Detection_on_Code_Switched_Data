@@ -53,13 +53,12 @@ class Propaganda_Detection(nn.Module):
             # Either
             # sequence_output = outputs.pooler_output
             # Or
-            max_length = outputs.last_hidden_state.shape[1]
+            max_length = outputs.last_hidden_state.shape[1] # last_hidden_state (12, 256, 1024/768)
             intermediate = torch.matmul(attention_mask.view(-1,1,max_length), outputs.last_hidden_state)
             sequence_output = torch.squeeze(intermediate)
 
             # x = sequence_output[:,:,:].view(-1,outputs.last_hidden_stateshape[2]) # 768 or 1024
             logits = self.linear_relu_stack(sequence_output)
-
 
             if labels is not None:
                 loss_fct = BCEWithLogitsLoss()

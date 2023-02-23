@@ -1,4 +1,6 @@
+import os
 import time
+import shutil
 
 import numpy as np
 from tqdm import tqdm, trange
@@ -23,6 +25,15 @@ class Training:
         self.techniques = techniques
         self.id2techniques = {v: k for k, v in self.techniques.items()}
         self.logger_results = logger_results
+
+        self.checkpoint = {
+            'model': None,
+            'epoch': 0,
+            'best_hamming_score': 0,
+            'best_hamming_score_epoch': 0,
+            'best_exact_match_ratio': 0,
+            'best_exact_match_ratio_epoch': 0,
+        }
 
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         assert self.device == torch.device('cuda')
@@ -150,35 +161,42 @@ class Training:
                     labels=b_labels, training=True ,token_type_ids=None) # Forward pas
                     
                 # Getting Probabilities for Prediction Classes
-                logits = outputs[1].detach().cpu().numpy() # 16 * 256 = (4096, 21)
-                # logits_x = logits.reshape(self.hyper_params['validation_batch_size'], self.hyper_params['max_seq_length'], logits.shape[2])
+                logits = outputs[1].detach().cpu().numpy()
+                pred = np.where(logits>=0, 1, 0)
+
                 # Golden Labels
-                label_ids = b_labels.to('cpu').numpy() # (16, 256)
-                label_ids = label_ids.reshape(-1) # (4096,)
+                label_ids = b_labels.to('cpu').numpy()
                 
                 loss = outputs[0]
                 eval_loss += loss.item()
 
-                predictions.extend(np.argmax(logits, axis=1).tolist()) # Taking Max among Prediction Classes
+                predictions.extend(pred.tolist())
                 true_labels.extend(label_ids.tolist())
 
+            predictions = np.array(predictions)
+            true_labels = np.array(true_labels)
 
             avg_eval_loss = eval_loss / len(self.valid_dataloader)
             print('     Average Val Loss For Epoch {}: {}'.format(E, avg_eval_loss))
             if not self.hyper_params["debugging"]:
                 self.logger_results.info('Average Val Loss For Epoch {}: {}'.format(E, avg_eval_loss))
 
-            validation_loss_values.append(avg_eval_loss)            
+            validation_loss_values.append(avg_eval_loss)   
             
-            pred_tags = [self.id2techniques[p] for p, l in zip(predictions, true_labels) if self.id2techniques[l] !='[PAD]']            
-            valid_tags = [self.id2techniques[l]for l in true_labels if self.id2techniques[l] !='[PAD]']
-
-            accuracyScore = get_accuracy(valid_tags, pred_tags)
-            f1Score = get_f1_score(valid_tags, pred_tags)
-            print('     Validation Accuracy: {}%'.format(accuracyScore))
-            print('     Validation F-1 Score:{}'.format(f1Score))
+            
+            hamming_score = get_hamming_score(true_labels, predictions)
+            exact_match_ratio = get_exact_match_ratio(true_labels, predictions)
+            print('     Validation Hamming Score: {}'.format(hamming_score))
+            print('     Validation Exact Match Ratio: {}'.format(exact_match_ratio))
             if not self.hyper_params["debugging"]:
-                self.logger_results.info('Validation Accuracy: {}%  |  Validation F-1 Score:{}'.format(accuracyScore, f1Score))
+                self.logger_results.info('Validation Hamming Score: {}  |  Validation Exact Match Ratio: {}'.format(hamming_score, exact_match_ratio))
+
+            if hamming_score >= self.checkpoint['best_hamming_score']:
+                self.checkpoint['best_hamming_score'] = hamming_score
+                self.checkpoint['best_hamming_score_epoch'] = E
+            if exact_match_ratio >= self.checkpoint['best_exact_match_ratio']:
+                self.checkpoint['best_exact_match_ratio'] = exact_match_ratio
+                self.checkpoint['best_exact_match_ratio_epoch'] = E
 
             stop = time.time()
             print('     Epoch #{} Duration:{}'.format(E, stop-start))
@@ -187,26 +205,36 @@ class Training:
             E+=1
             # print('-'*20)
         
+        self.checkpoint['epoch'] = E
+
         labels_ = list(self.techniques.keys())
-
-        classificationReport = get_classification_report(valid_tags, pred_tags)
-        confusionMatrix = get_confusion_matrix(valid_tags, pred_tags, labels_)
-
+        classificationReport = get_classification_report(true_labels, predictions, labels_)
         if not self.hyper_params["debugging"]:
-            self.logger_results.info('Final Validation Accuracy: {}%  |  Final Validation F-1 Score:{}'.format(accuracyScore, f1Score))
+            self.logger_results.info('Validation Hamming Score: {}  |  Validation Exact Match Ratio: {}'.format(hamming_score, exact_match_ratio))
             self.logger_results.info('Classification Report:')
             self.logger_results.info('\n{}'.format(classificationReport))
-            self.logger_results.info('Confusion Matrix:')
-            self.logger_results.info('\n{}'.format(confusionMatrix))
 
     def save_model(self,):
+        if not self.hyper_params["debugging"]:
 
-        torch.save(self.model.state_dict(), self.paths['Model_Files'] + 'model_bert.pt')
-        self.tokenizer.save_pretrained(self.paths['Model_Files'] +'tokenizer/')
+            foldername = self.hyper_params['model_run']
+            path = os.getcwd() + self.paths['Model_Files'] + foldername
+            modelFolderExist = os.path.exists(path)
+            if not modelFolderExist:
+                os.makedirs(path)
+            else:
+                print('Exception: Model Folder already exists with this name. Assign path variable a new folder name.')
+                breakpoint()
+                # Do path = os.getcwd() + self.paths['Model_Files'] + 'new_name'
+            self.checkpoint['model'] = self.model.state_dict()
+            shutil.copy2(self.hyper_params['log_file'], path)
+        
+            torch.save(self.checkpoint, path + '/' + self.hyper_params['model_run'] + '.pt')
+            self.tokenizer.save_pretrained(path + '/' + self.hyper_params['model_run']+ '_tokenizer/')
     
     def run(self,):
     
         optimizer, scheduler = self.optimizer_and_lr_scheduler()
         self.training_and_validation(optimizer, scheduler)
-        # self.save_model()
+        self.save_model()
 
