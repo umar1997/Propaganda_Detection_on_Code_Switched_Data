@@ -13,8 +13,12 @@ class Dataset_Preparation():
         self.paths = paths
         self.tokenizer = tokenizer
         self.hyper_params = hyper_params
-        self.train_dataset = self.paths['Training_Data']
-        self.val_dataset = self.paths['Validation_Data']
+        if self.hyper_params['model_run'] == 'BERT':
+            self.train_dataset = self.paths['Meme_Training_Data']
+            self.val_dataset = self.paths['Meme_Validation_Data']
+        else:
+            self.train_dataset = self.paths['Training_Data']
+            self.val_dataset = self.paths['Validation_Data']
         self.techniques = self.read_techniques(self.paths["Techniques"])
 
     @staticmethod
@@ -59,23 +63,45 @@ class Dataset_Preparation():
         with open(json_file, 'r') as f:
                 data = json.loads(f.read())
 
-        data_dict = dict()
-        for i, (_, example) in enumerate(data.items()):
-            text = self.clean_text(example['text'])
-            list_labels = example['labels']
 
-            data_dict[i] = {'text' : text, 'technique' : [], 'text_fragment' : []}
-            for label in list_labels:
-                technique = label['technique']
-                fragment = self.clean_text(label['text_fragment'])
-                if fragment not in text:
-                    raise Exception('Fragment cleaned different from text cleaned')
-                data_dict[i]['technique'].append(technique)
-                data_dict[i]['text_fragment'].append(fragment)
-                
-                assert len(data_dict[i]['technique']) == len (data_dict[i]['text_fragment'])
+        if self.hyper_params['model_run'] == 'BERT':
+            data_dict = dict()
+            for i, example in enumerate(data):
+                text = self.clean_text(example['text'])
+                list_labels = example['labels']
 
-        data_df = pd.DataFrame(data_dict).transpose()
+                data_dict[i] = {'text' : text, 'technique' : [], 'text_fragment' : []}
+                for label in list_labels:
+                    technique = label['technique']
+                    fragment = self.clean_text(label['text_fragment'])
+                    if fragment not in text:
+                        raise Exception('Fragment cleaned different from text cleaned')
+                    data_dict[i]['technique'].append(technique)
+                    data_dict[i]['text_fragment'].append(fragment)
+                    
+                    assert len(data_dict[i]['technique']) == len (data_dict[i]['text_fragment'])
+
+            data_df = pd.DataFrame(data_dict).transpose()
+            breakpoint()
+        else:
+            data_dict = dict()
+            for i, (_, example) in enumerate(data.items()):
+                text = self.clean_text(example['text'])
+                list_labels = example['labels']
+
+                data_dict[i] = {'text' : text, 'technique' : [], 'text_fragment' : []}
+                for label in list_labels:
+                    technique = label['technique']
+                    fragment = self.clean_text(label['text_fragment'])
+                    if fragment not in text:
+                        raise Exception('Fragment cleaned different from text cleaned')
+                    data_dict[i]['technique'].append(technique)
+                    data_dict[i]['text_fragment'].append(fragment)
+                    
+                    assert len(data_dict[i]['technique']) == len (data_dict[i]['text_fragment'])
+
+            data_df = pd.DataFrame(data_dict).transpose()
+
         return data_df
 
 
@@ -175,15 +201,17 @@ if __name__ == '__main__':
             "Techniques":"./techniques.json",
             "Log_Folder":"./Log_Files/",
             "Model_Files":"./Model_Files/",
-            "Model_Selection":"./Model_Selection/",
             "Training_Data": "./Data_Files/Splits/train_split.json",
             "Validation_Data": "./Data_Files/Splits/val_split.json",
+            "Meme_Training_Data": "./Data_Files/Meme_Data_Splits/training_set_.json",
+            "Meme_Validation_Data": "./Data_Files/Meme_Data_Splits/dev_set_.json",
     }
 
     hyper_params = {
         'training_batch_size' : 16,
         'validation_batch_size': 16,
         'max_seq_length' : 256,
+        'model_run' :  'BERT'
     }
 
     dataPrep = Dataset_Preparation(paths, tokenizer, hyper_params)

@@ -76,9 +76,10 @@ if __name__ == '__main__':
             "Techniques":"./techniques.json",
             "Log_Folder":"./Log_Files/",
             "Model_Files":"./Model_Files/",
-            "Model_Selection":"./Model_Selection/",
             "Training_Data": "./Data_Files/Splits/train_split.json",
             "Validation_Data": "./Data_Files/Splits/val_split.json",
+            "Meme_Training_Data": "./Data_Files/Meme_Data_Splits/training_set_.json",
+            "Meme_Validation_Data": "./Data_Files/Meme_Data_Splits/dev_set_.json",
             "Log_Folder":"./Log_Files/"
     }
 
@@ -109,6 +110,7 @@ if __name__ == '__main__':
     ################################################## SEEDS
     seed = hyper_params['random_seed']
     torch.cuda.manual_seed_all(seed)
+    torch.cuda.manual_seed(seed)
     torch.manual_seed(seed)
     np.random.seed(seed)
 
@@ -275,6 +277,66 @@ if __name__ == '__main__':
 
 
 
+
+
+
+
+    # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< XLM_RoBerta >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    if hyper_params['model_run'] == 'XLM_RoBerta':
+        checkpoint_model = hyper_params['model_type'] = 'xlm-roberta-base'
+        checkpoint_tokenizer = hyper_params['tokenizer_type'] = 'xlm-roberta-base'
+        ##################################################  MODEL + TOKENIZER
+        if hyper_params['training']:
+
+            tokenizer = AutoTokenizer.from_pretrained(checkpoint_tokenizer, do_lower_case = False)
+            model = Propaganda_Detection(checkpoint_model=checkpoint_model, num_tags=len(techniques))
+            model = model.to(device)
+            print('##################################################')
+            if not hyper_params["debugging"]:
+                logger_progress.critical('Model + Tokenizer Initialized')
+
+            ##################################################  DATA PROCESSING
+            dataPrep = Dataset_Preparation(paths, tokenizer, hyper_params)
+            train_dataloader, valid_dataloader = dataPrep.run()
+            if not hyper_params["debugging"]:
+                logger_progress.critical('Tokenizing sentences and encoding labels')
+                logger_progress.critical('Data Loaders Created')
+
+
+            ##################################################  TRAINING
+            if not hyper_params["debugging"]:
+                logger_progress.critical('Training Started')
+            train = Training(paths, model, tokenizer, hyper_params, train_dataloader, valid_dataloader, techniques, logger_results)
+            train.run()
+            if not hyper_params["debugging"]:
+                logger_progress.critical('Training Finished')
+                logger_progress.critical('Model Saved')
+        else:
+            pass
+            ################################################## INFERENCE
+            # print('##################################################')
+            # if not hyper_params["debugging"]:
+            #     logger_progress.critical('Starting Inference')
+            # inference = Inferencer(paths, checkpoint_tokenizer, checkpoint_model, hyper_params, techniques)
+            # macro_f1, micro_f1 = inference.run()
+            # if not hyper_params["debugging"]:
+            #     logger_results.info('Macro F1-Score | Micro F1-Score :  {} | {}'.format(macro_f1, micro_f1))
+            #     logger_progress.critical('Inference Ended')
+    # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<                 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     #----------------------------------------------------------------------------------
     
     # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -294,14 +356,14 @@ if __name__ == '__main__':
 
     script = """
     python main.py \
-        --model_run XLM_RoBerta_Roman_Urdu \
+        --model_run XLM_RoBerta \
         --training 1 \
         --model_type default \
         --tokenizer_type default \
         --max_seq_length 256 \
         --training_batch_size 12 \
         --validation_batch_size 12 \
-        --learning_rate 5e-5 \
+        --learning_rate 3e-5 \
         --num_epochs 10 \
         --seed 42 \
         --adam_epsilon 1e-8 \
@@ -309,6 +371,6 @@ if __name__ == '__main__':
         --optimizer AdamW \
         --scheduler LinearWarmup \
         --full_finetuning 1 \
-        --debugging 1
+        --debugging 0
     """
 

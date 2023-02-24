@@ -107,6 +107,7 @@ class Training:
 
         loss_values, validation_loss_values = [], []
         E = 1
+        # self.hyper_params['epochs'] = 1
         for _ in trange(self.hyper_params['epochs'], desc= "Epoch \n"):
             print('\n')
             print('     Epoch #{}'.format(E))
@@ -218,7 +219,7 @@ class Training:
         if not self.hyper_params["debugging"]:
 
             foldername = self.hyper_params['model_run']
-            path = os.getcwd() + self.paths['Model_Files'] + foldername
+            path = os.getcwd() + '/Model_Files/' + foldername
             modelFolderExist = os.path.exists(path)
             if not modelFolderExist:
                 os.makedirs(path)
