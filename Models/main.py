@@ -137,6 +137,9 @@ if __name__ == '__main__':
         logger_meta = None
         logger_progress = None
         logger_results = None
+    
+    logger_object = [logger_meta, logger_progress, logger_results]
+
 
 
     ################################################## Models 
@@ -147,193 +150,70 @@ if __name__ == '__main__':
     # 4. XLM RoBerta                            'xlm-roberta-base'
     # 5. XLM RoBerta Roman Urdu fine-tuned      'Aimlab/xlm-roberta-roman-urdu-finetuned'
 
+def run_model(hyper_params, logger_object, paths):
+    logger_meta, logger_progress, logger_results = logger_object
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     assert device == torch.device('cuda')
 
     techniques = Dataset_Preparation.read_techniques(paths['Techniques'])
 
-
-
-
-
-
-
-
-
-    # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< XLM RoBerta Roman Urdu >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     if hyper_params['model_run'] == 'XLM_RoBerta_Roman_Urdu':
         checkpoint_model = hyper_params['model_type'] = 'Aimlab/xlm-roberta-roman-urdu-finetuned'
         checkpoint_tokenizer = hyper_params['tokenizer_type'] = 'Aimlab/xlm-roberta-roman-urdu-finetuned'
-        ##################################################  MODEL + TOKENIZER
-        if hyper_params['training']:
-
-            tokenizer = AutoTokenizer.from_pretrained(checkpoint_tokenizer, do_lower_case = False)
-            model = Propaganda_Detection(checkpoint_model=checkpoint_model, num_tags=len(techniques))
-            model = model.to(device)
-            print('##################################################')
-            if not hyper_params["debugging"]:
-                logger_progress.critical('Model + Tokenizer Initialized')
-
-            ##################################################  DATA PROCESSING
-            dataPrep = Dataset_Preparation(paths, tokenizer, hyper_params)
-            train_dataloader, valid_dataloader = dataPrep.run()
-            if not hyper_params["debugging"]:
-                logger_progress.critical('Tokenizing sentences and encoding labels')
-                logger_progress.critical('Data Loaders Created')
-
-
-            ##################################################  TRAINING
-            if not hyper_params["debugging"]:
-                logger_progress.critical('Training Started')
-            train = Training(paths, model, tokenizer, hyper_params, train_dataloader, valid_dataloader, techniques, logger_results)
-            train.run()
-            if not hyper_params["debugging"]:
-                logger_progress.critical('Training Finished')
-                logger_progress.critical('Model Saved')
-        else:
-            pass
-            ################################################## INFERENCE
-            # print('##################################################')
-            # if not hyper_params["debugging"]:
-            #     logger_progress.critical('Starting Inference')
-            # inference = Inferencer(paths, checkpoint_tokenizer, checkpoint_model, hyper_params, techniques)
-            # macro_f1, micro_f1 = inference.run()
-            # if not hyper_params["debugging"]:
-            #     logger_results.info('Macro F1-Score | Micro F1-Score :  {} | {}'.format(macro_f1, micro_f1))
-            #     logger_progress.critical('Inference Ended')
-    # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<                 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< Multilingual_BERT >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     if hyper_params['model_run'] == 'Multilingual_BERT':
         checkpoint_model = hyper_params['model_type'] = 'bert-base-multilingual-cased'
         checkpoint_tokenizer = hyper_params['tokenizer_type'] = 'bert-base-multilingual-cased'
-        ##################################################  MODEL + TOKENIZER
-        if hyper_params['training']:
-
-            tokenizer = AutoTokenizer.from_pretrained(checkpoint_tokenizer, do_lower_case = False)
-            model = Propaganda_Detection(checkpoint_model=checkpoint_model, num_tags=len(techniques))
-            model = model.to(device)
-            print('##################################################')
-            if not hyper_params["debugging"]:
-                logger_progress.critical('Model + Tokenizer Initialized')
-
-            ##################################################  DATA PROCESSING
-            dataPrep = Dataset_Preparation(paths, tokenizer, hyper_params)
-            train_dataloader, valid_dataloader = dataPrep.run()
-            if not hyper_params["debugging"]:
-                logger_progress.critical('Tokenizing sentences and encoding labels')
-                logger_progress.critical('Data Loaders Created')
-
-
-            ##################################################  TRAINING
-            if not hyper_params["debugging"]:
-                logger_progress.critical('Training Started')
-            train = Training(paths, model, tokenizer, hyper_params, train_dataloader, valid_dataloader, techniques, logger_results)
-            train.run()
-            if not hyper_params["debugging"]:
-                logger_progress.critical('Training Finished')
-                logger_progress.critical('Model Saved')
-        else:
-            pass
-            ################################################## INFERENCE
-            # print('##################################################')
-            # if not hyper_params["debugging"]:
-            #     logger_progress.critical('Starting Inference')
-            # inference = Inferencer(paths, checkpoint_tokenizer, checkpoint_model, hyper_params, techniques)
-            # macro_f1, micro_f1 = inference.run()
-            # if not hyper_params["debugging"]:
-            #     logger_results.info('Macro F1-Score | Micro F1-Score :  {} | {}'.format(macro_f1, micro_f1))
-            #     logger_progress.critical('Inference Ended')
-    # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<                 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< XLM_RoBerta >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     if hyper_params['model_run'] == 'XLM_RoBerta':
         checkpoint_model = hyper_params['model_type'] = 'xlm-roberta-base'
         checkpoint_tokenizer = hyper_params['tokenizer_type'] = 'xlm-roberta-base'
-        ##################################################  MODEL + TOKENIZER
-        if hyper_params['training']:
+    if hyper_params['model_run'] == 'BERT':
+        checkpoint_model = hyper_params['model_type'] = 'bert-base-cased'
+        checkpoint_tokenizer = hyper_params['tokenizer_type'] = 'bert-base-cased'
+    
+        
+    ##################################################  MODEL + TOKENIZER
+    if hyper_params['training']:
 
-            tokenizer = AutoTokenizer.from_pretrained(checkpoint_tokenizer, do_lower_case = False)
-            model = Propaganda_Detection(checkpoint_model=checkpoint_model, num_tags=len(techniques))
-            model = model.to(device)
-            print('##################################################')
-            if not hyper_params["debugging"]:
-                logger_progress.critical('Model + Tokenizer Initialized')
+        tokenizer = AutoTokenizer.from_pretrained(checkpoint_tokenizer, do_lower_case = False)
+        model = Propaganda_Detection(checkpoint_model=checkpoint_model, num_tags=len(techniques))
+        model = model.to(device)
+        print('##################################################')
+        if not hyper_params["debugging"]:
+            logger_progress.critical('Model + Tokenizer Initialized')
 
-            ##################################################  DATA PROCESSING
-            dataPrep = Dataset_Preparation(paths, tokenizer, hyper_params)
-            train_dataloader, valid_dataloader = dataPrep.run()
-            if not hyper_params["debugging"]:
-                logger_progress.critical('Tokenizing sentences and encoding labels')
-                logger_progress.critical('Data Loaders Created')
-
-
-            ##################################################  TRAINING
-            if not hyper_params["debugging"]:
-                logger_progress.critical('Training Started')
-            train = Training(paths, model, tokenizer, hyper_params, train_dataloader, valid_dataloader, techniques, logger_results)
-            train.run()
-            if not hyper_params["debugging"]:
-                logger_progress.critical('Training Finished')
-                logger_progress.critical('Model Saved')
-        else:
-            pass
-            ################################################## INFERENCE
-            # print('##################################################')
-            # if not hyper_params["debugging"]:
-            #     logger_progress.critical('Starting Inference')
-            # inference = Inferencer(paths, checkpoint_tokenizer, checkpoint_model, hyper_params, techniques)
-            # macro_f1, micro_f1 = inference.run()
-            # if not hyper_params["debugging"]:
-            #     logger_results.info('Macro F1-Score | Micro F1-Score :  {} | {}'.format(macro_f1, micro_f1))
-            #     logger_progress.critical('Inference Ended')
-    # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<                 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+        ##################################################  DATA PROCESSING
+        dataPrep = Dataset_Preparation(paths, tokenizer, hyper_params)
+        train_dataloader, valid_dataloader = dataPrep.run()
+        if not hyper_params["debugging"]:
+            logger_progress.critical('Tokenizing sentences and encoding labels')
+            logger_progress.critical('Data Loaders Created')
 
 
+        ##################################################  TRAINING
+        if not hyper_params["debugging"]:
+            logger_progress.critical('Training Started')
+        train = Training(paths, model, tokenizer, hyper_params, train_dataloader, valid_dataloader, techniques, logger_results)
+        train.run()
+        if not hyper_params["debugging"]:
+            logger_progress.critical('Training Finished')
+            logger_progress.critical('Model Saved')
+    else:
+        pass
+        ################################################## INFERENCE
+        # print('##################################################')
+        # if not hyper_params["debugging"]:
+        #     logger_progress.critical('Starting Inference')
+        # inference = Inferencer(paths, checkpoint_tokenizer, checkpoint_model, hyper_params, techniques)
+        # macro_f1, micro_f1 = inference.run()
+        # if not hyper_params["debugging"]:
+        #     logger_results.info('Macro F1-Score | Micro F1-Score :  {} | {}'.format(macro_f1, micro_f1))
+        #     logger_progress.critical('Inference Ended')
 
+    return
+# <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<                 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
-
-
-
-
-
-
-
+run_model(hyper_params, logger_object, paths)
 
 
 
@@ -354,23 +234,23 @@ if __name__ == '__main__':
     
     # nvidia-smi | grep 'python' | awk '{ print $5 }' | xargs -n1 kill -9
 
-    script = """
-    python main.py \
-        --model_run XLM_RoBerta \
-        --training 1 \
-        --model_type default \
-        --tokenizer_type default \
-        --max_seq_length 256 \
-        --training_batch_size 12 \
-        --validation_batch_size 12 \
-        --learning_rate 3e-5 \
-        --num_epochs 10 \
-        --seed 42 \
-        --adam_epsilon 1e-8 \
-        --max_grad_norm 1.0 \
-        --optimizer AdamW \
-        --scheduler LinearWarmup \
-        --full_finetuning 1 \
-        --debugging 0
-    """
+script = """
+python main.py \
+    --model_run BERT \
+    --training 1 \
+    --model_type default \
+    --tokenizer_type default \
+    --max_seq_length 256 \
+    --training_batch_size 12 \
+    --validation_batch_size 12 \
+    --learning_rate 3e-5 \
+    --num_epochs 10 \
+    --seed 42 \
+    --adam_epsilon 1e-8 \
+    --max_grad_norm 1.0 \
+    --optimizer AdamW \
+    --scheduler LinearWarmup \
+    --full_finetuning 1 \
+    --debugging 0
+"""
 

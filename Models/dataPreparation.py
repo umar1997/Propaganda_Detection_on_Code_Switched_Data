@@ -82,7 +82,6 @@ class Dataset_Preparation():
                     assert len(data_dict[i]['technique']) == len (data_dict[i]['text_fragment'])
 
             data_df = pd.DataFrame(data_dict).transpose()
-            breakpoint()
         else:
             data_dict = dict()
             for i, (_, example) in enumerate(data.items()):
