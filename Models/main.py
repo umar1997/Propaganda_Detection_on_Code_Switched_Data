@@ -9,6 +9,7 @@ from packaging import version
 
 from Model.training import Training
 from Model.model import Propaganda_Detection
+from Model.inference import Inferencer
 from dataPreparation import Dataset_Preparation
 
 import transformers
@@ -78,6 +79,7 @@ if __name__ == '__main__':
             "Model_Files":"./Model_Files/",
             "Training_Data": "./Data_Files/Splits/train_split.json",
             "Validation_Data": "./Data_Files/Splits/val_split.json",
+            "Testing_Data": "./Data_Files/Splits/test_split.json",
             "Meme_Training_Data": "./Data_Files/Meme_Data_Splits/training_set_.json",
             "Meme_Validation_Data": "./Data_Files/Meme_Data_Splits/dev_set_.json",
             "Log_Folder":"./Log_Files/"
@@ -118,12 +120,36 @@ if __name__ == '__main__':
     current_datetime = datetime.now()
     date_time = current_datetime.strftime("%d-%m-%Y_%H:%M:%S")
     hyper_params['datetime'] = date_time
+
+    ################################################## MODELS 
+
+    # 1. Translation with BERT @ Memes          'bert-base-cased'
+    # 2. mBERT                                  'bert-base-multilingual-cased'
+    # 3. RUBERT
+    # 4. XLM RoBerta                            'xlm-roberta-base'
+    # 5. XLM RoBerta Roman Urdu fine-tuned      'Aimlab/xlm-roberta-roman-urdu-finetuned'
+
+    if hyper_params['model_run'] == 'XLM_RoBerta_Roman_Urdu':
+        hyper_params['model_type'] = 'Aimlab/xlm-roberta-roman-urdu-finetuned'
+        hyper_params['tokenizer_type'] = 'Aimlab/xlm-roberta-roman-urdu-finetuned'
+    if hyper_params['model_run'] == 'Multilingual_BERT':
+        hyper_params['model_type'] = 'bert-base-multilingual-cased'
+        hyper_params['tokenizer_type'] = 'bert-base-multilingual-cased'
+    if hyper_params['model_run'] == 'XLM_RoBerta':
+        hyper_params['model_type'] = 'xlm-roberta-base'
+        hyper_params['tokenizer_type'] = 'xlm-roberta-base'
+    if hyper_params['model_run'] == 'BERT':
+        hyper_params['model_type'] = 'bert-base-cased'
+        hyper_params['tokenizer_type'] = 'bert-base-cased'
     
 
     ################################################## LOG FILE SET UP
     
     if not hyper_params["debugging"]:
-        file_name = paths['Log_Folder'] + hyper_params['model_run'] + '-' + date_time #global_args.log_file
+        if hyper_params["training"]:
+            file_name = paths['Log_Folder'] + hyper_params['model_run'] + '-' + date_time #global_args.log_file
+        else:
+            file_name = paths['Log_Folder'] + hyper_params['model_run'] + '-' + 'Inference-' + date_time
         hyper_params['log_file'] = file_name
         logger_meta = get_logger(name='META', file_name=file_name, type='meta')
         logger_progress = get_logger(name='PORGRESS', file_name=file_name, type='progress')
@@ -141,15 +167,8 @@ if __name__ == '__main__':
     logger_object = [logger_meta, logger_progress, logger_results]
 
 
-
-    ################################################## Models 
-
-    # 1. Translation with BERT trained on Memes
-    # 2. mBERT                                  'bert-base-multilingual-cased'
-    # 3. RUBERT
-    # 4. XLM RoBerta                            'xlm-roberta-base'
-    # 5. XLM RoBerta Roman Urdu fine-tuned      'Aimlab/xlm-roberta-roman-urdu-finetuned'
-
+############################################################# RUN MODELS
+# <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<                 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 def run_model(hyper_params, logger_object, paths):
     logger_meta, logger_progress, logger_results = logger_object
 
@@ -157,33 +176,22 @@ def run_model(hyper_params, logger_object, paths):
     assert device == torch.device('cuda')
 
     techniques = Dataset_Preparation.read_techniques(paths['Techniques'])
-
-    if hyper_params['model_run'] == 'XLM_RoBerta_Roman_Urdu':
-        checkpoint_model = hyper_params['model_type'] = 'Aimlab/xlm-roberta-roman-urdu-finetuned'
-        checkpoint_tokenizer = hyper_params['tokenizer_type'] = 'Aimlab/xlm-roberta-roman-urdu-finetuned'
-    if hyper_params['model_run'] == 'Multilingual_BERT':
-        checkpoint_model = hyper_params['model_type'] = 'bert-base-multilingual-cased'
-        checkpoint_tokenizer = hyper_params['tokenizer_type'] = 'bert-base-multilingual-cased'
-    if hyper_params['model_run'] == 'XLM_RoBerta':
-        checkpoint_model = hyper_params['model_type'] = 'xlm-roberta-base'
-        checkpoint_tokenizer = hyper_params['tokenizer_type'] = 'xlm-roberta-base'
-    if hyper_params['model_run'] == 'BERT':
-        checkpoint_model = hyper_params['model_type'] = 'bert-base-cased'
-        checkpoint_tokenizer = hyper_params['tokenizer_type'] = 'bert-base-cased'
     
+    checkpoint_model = hyper_params['model_type']
+    checkpoint_tokenizer = hyper_params['tokenizer_type']
         
     ##################################################  MODEL + TOKENIZER
     if hyper_params['training']:
 
         tokenizer = AutoTokenizer.from_pretrained(checkpoint_tokenizer, do_lower_case = False)
-        model = Propaganda_Detection(checkpoint_model=checkpoint_model, num_tags=len(techniques))
+        model = Propaganda_Detection(checkpoint_model=checkpoint_model, num_tags=len(techniques), device=device)
         model = model.to(device)
         print('##################################################')
         if not hyper_params["debugging"]:
             logger_progress.critical('Model + Tokenizer Initialized')
 
         ##################################################  DATA PROCESSING
-        dataPrep = Dataset_Preparation(paths, tokenizer, hyper_params)
+        dataPrep = Dataset_Preparation(paths, tokenizer, hyper_params, techniques)
         train_dataloader, valid_dataloader = dataPrep.run()
         if not hyper_params["debugging"]:
             logger_progress.critical('Tokenizing sentences and encoding labels')
@@ -199,16 +207,14 @@ def run_model(hyper_params, logger_object, paths):
             logger_progress.critical('Training Finished')
             logger_progress.critical('Model Saved')
     else:
-        pass
-        ################################################## INFERENCE
-        # print('##################################################')
-        # if not hyper_params["debugging"]:
-        #     logger_progress.critical('Starting Inference')
-        # inference = Inferencer(paths, checkpoint_tokenizer, checkpoint_model, hyper_params, techniques)
-        # macro_f1, micro_f1 = inference.run()
-        # if not hyper_params["debugging"]:
-        #     logger_results.info('Macro F1-Score | Micro F1-Score :  {} | {}'.format(macro_f1, micro_f1))
-        #     logger_progress.critical('Inference Ended')
+        ################################################# INFERENCE
+        print('##################################################')
+        if not hyper_params["debugging"]:
+            logger_progress.critical('Starting Inference')
+        inference = Inferencer(paths, checkpoint_tokenizer, checkpoint_model, hyper_params, techniques, logger_results)
+        inference.run()
+        if not hyper_params["debugging"]:
+            logger_progress.critical('Inference Complete')
 
     return
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<                 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -236,8 +242,7 @@ run_model(hyper_params, logger_object, paths)
 
 script = """
 python main.py \
-    --model_run BERT \
-    --training 1 \
+    --model_run XLM_RoBerta \
     --model_type default \
     --tokenizer_type default \
     --max_seq_length 256 \
@@ -251,6 +256,7 @@ python main.py \
     --optimizer AdamW \
     --scheduler LinearWarmup \
     --full_finetuning 1 \
+    --training 1 \
     --debugging 0
 """
 

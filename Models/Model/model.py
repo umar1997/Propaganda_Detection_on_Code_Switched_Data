@@ -1,3 +1,5 @@
+import numpy as np
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -8,11 +10,12 @@ from transformers import AutoModel, AutoConfig, AutoModelForSequenceClassificati
 from transformers.modeling_outputs import SequenceClassifierOutput
 
 class Propaganda_Detection(nn.Module):
-    def __init__(self, checkpoint_model, num_tags):
+    def __init__(self, checkpoint_model, num_tags, device):
     
         super(Propaganda_Detection, self).__init__()
 
         self.num_labels = num_tags
+        self.device = device
         self.model = AutoModel.from_pretrained(
             checkpoint_model,
             config=AutoConfig.from_pretrained(
@@ -40,6 +43,7 @@ class Propaganda_Detection(nn.Module):
     ):
 
         if training: # For training
+            assert labels.shape[1] == 20
             # https://discuss.pytorch.org/t/how-to-confirm-parameters-of-frozen-part-of-network-are-not-being-updated/142482
             # for name, param in self.model.named_parameters():
             #     param.requires_grad = False
@@ -55,9 +59,10 @@ class Propaganda_Detection(nn.Module):
             # Or
             max_length = outputs.last_hidden_state.shape[1] # last_hidden_state (12, 256, 1024/768)
             intermediate = torch.matmul(attention_mask.view(-1,1,max_length), outputs.last_hidden_state)
-            sequence_output = torch.squeeze(intermediate)
-
-            # x = sequence_output[:,:,:].view(-1,outputs.last_hidden_stateshape[2]) # 768 or 1024
+            sequence_output = torch.squeeze(intermediate,1)
+            # attention_mask.view(-1,1,max_length).shape = torch.Size([12, 1, 256])
+            # outputs.last_hidden_state.shape            = torch.Size([12, 256, 768])
+            # intermediate.shape                         = torch.Size([12, 1, 768])
             logits = self.linear_relu_stack(sequence_output)
 
             if labels is not None:
@@ -67,9 +72,14 @@ class Propaganda_Detection(nn.Module):
         
         else: # For inference
             outputs = self.model(input_ids=input_ids)
-
-            sequence_output = outputs[0] #  outputs[0]=last hidden state
-            x = sequence_output[:,:,:].view(-1,sequence_output.shape[2])
+            # Either
+            # x = outputs.pooler_output
+            # Or
+            seq_len = outputs[0].shape[1] # torch.Size([1, 38, 768])
+            attention_copy = torch.tensor(np.ones((seq_len)).reshape(1,1,-1)).to(self.device) # (1, 1, 38)
+            attention_copy = attention_copy.type(torch.float)
+            intermediate = torch.matmul(attention_copy, outputs.last_hidden_state)
+            x = torch.squeeze(intermediate,1)
             logits = self.linear_relu_stack(x)
             return SequenceClassifierOutput(loss=None, logits=logits, hidden_states=None,attentions=None)
 

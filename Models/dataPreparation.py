@@ -9,7 +9,7 @@ from torch.utils.data import TensorDataset, DataLoader, RandomSampler, Sequentia
 from keras_preprocessing.sequence import pad_sequences
 
 class Dataset_Preparation():
-    def __init__(self, paths, tokenizer, hyper_params):
+    def __init__(self, paths, tokenizer, hyper_params, techniques):
         self.paths = paths
         self.tokenizer = tokenizer
         self.hyper_params = hyper_params
@@ -19,7 +19,7 @@ class Dataset_Preparation():
         else:
             self.train_dataset = self.paths['Training_Data']
             self.val_dataset = self.paths['Validation_Data']
-        self.techniques = self.read_techniques(self.paths["Techniques"])
+        self.techniques = techniques
 
     @staticmethod
     def read_techniques(filename):
@@ -56,6 +56,7 @@ class Dataset_Preparation():
         text = re.sub(r' {2,}', ' ',text)
         return text
 
+
     def read_json_files_to_df(self, json_file):
         """
         Read file from json format and convert into pandas datatframe.
@@ -64,7 +65,7 @@ class Dataset_Preparation():
                 data = json.loads(f.read())
 
 
-        if self.hyper_params['model_run'] == 'BERT':
+        if (self.hyper_params['model_run'] == 'BERT') and (self.hyper_params['training']):
             data_dict = dict()
             for i, example in enumerate(data):
                 text = self.clean_text(example['text'])
@@ -108,7 +109,7 @@ class Dataset_Preparation():
         assert len(fragments) == len(techniques)
         tokenized_words = self.tokenizer.tokenize(text)
         indices = [self.techniques[t] for t in techniques]
-        labels = np.zeros((20))
+        labels = np.zeros((len(self.techniques)))
         labels[indices] = 1
         labels = labels.tolist()
 
@@ -124,6 +125,8 @@ class Dataset_Preparation():
             labels_list.append(labels)
 
         assert len(tokenized_words_list) == len(labels_list)
+        for l in labels_list:
+            assert len(l) == len(self.techniques)
         return tokenized_words_list, labels_list
 
     def get_encoded_data(self,tokenized_words_list, labels_list):
@@ -133,9 +136,9 @@ class Dataset_Preparation():
         # We do this by padding all sequences to the same length, then using the “attention_mask” tensor to identify which tokens are padding
         # So it is not included in the num_tags for our model classes and the NLL looks at 0 to num_tags-1 classes so we need the 0 class to be a class the model predicts
 
-        pad_token_id = -100
-        self.techniques[self.tokenizer.pad_token] = pad_token_id
-        id2techniques = {v: k for k, v in self.techniques.items()}
+        # pad_token_id = -100
+        # self.techniques[self.tokenizer.pad_token] = pad_token_id
+        # id2techniques = {v: k for k, v in self.techniques.items()}
         # cls = [self.tokenizer.cls_token_id]
         # sep = [self.tokenizer.sep_token_id]
         input_ids = pad_sequences(
@@ -153,6 +156,8 @@ class Dataset_Preparation():
         assert len(input_ids) == len(attention_masks) # == len(tags)
         for i in range(len(input_ids)):
             assert len(input_ids[i]) == len(attention_masks[i]) # == len(tags[i])
+        for t in tags:
+            assert len(t) == len(self.techniques)
 
         return input_ids, tags, attention_masks
     def convert_to_tensors(self,input_ids, tags, attention_masks):
@@ -186,6 +191,19 @@ class Dataset_Preparation():
         val_input_ids, val_tag, val_masks = self.convert_to_tensors(val_input_ids, val_tags, val_attention_masks)
 
         train_dataloader, valid_dataloader = self.data_loader(train_input_ids, train_tag, train_masks, val_input_ids, val_tag, val_masks)
+
+        print('-'*30)
+        print('DATA INFORMATION')
+        print('Training Datatset: {}'.format(len(train_df)))
+        print('Training Batch Size: {}'.format(self.hyper_params['training_batch_size']))
+        print('Training DataLoader: {}'.format(len(train_dataloader)))
+        print()
+        print('Validation Datatset: {}'.format(len(val_df)))
+        print('Validation Batch Size: {}'.format(self.hyper_params['validation_batch_size']))
+        print('Validation DataLoader: {}'.format(len(valid_dataloader)))
+        print('-'*30)
+
+
         return train_dataloader, valid_dataloader
 
 if __name__ == '__main__':

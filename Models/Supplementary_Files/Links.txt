@@ -55,4 +55,10 @@ https://towardsdatascience.com/how-to-train-a-bert-model-from-scratch-72cfce554f
 https://stackoverflow.com/questions/70939904/can-i-fine-tune-bert-using-only-masked-language-model-and-next-sentence-predicti
 https://www.analyticsvidhya.com/blog/2022/09/fine-tuning-bert-with-masked-language-modeling/
 
+
+Extra
+#######################
+https://towardsdatascience.com/evaluating-multi-label-classifiers-a31be83da6ea
+https://towardsdatascience.com/tips-and-tricks-for-your-bert-based-applications-359c6b697f8e#:~:text=pooler_output%20is%20the%20embedding%20of,from%20the%20last%20hidden%20state.
+
 nvidia-smi | grep 'python' | awk '{ print $5 }' | xargs -n1 kill -9

@@ -121,6 +121,7 @@ class Training:
             
             ###################### TRAINING
             for step, batch in enumerate(self.train_dataloader):
+                
                 batch = tuple(t.to(self.device) for t in batch)
                 b_input_ids, b_input_mask, b_labels = batch # Mantained the order for both train_data/val_data
                 
@@ -153,14 +154,14 @@ class Training:
             eval_loss = 0
             predictions, true_labels = [], []
             
-            for batch in self.valid_dataloader:
+            for step, batch in enumerate(self.valid_dataloader):
                 batch = tuple(t.to(self.device)for t in batch)
                 b_input_ids, b_input_mask, b_labels = batch
                 
                 with torch.no_grad(): # No backprop
                     outputs = self.model(b_input_ids, attention_mask=b_input_mask, 
                     labels=b_labels, training=True ,token_type_ids=None) # Forward pas
-                    
+                
                 # Getting Probabilities for Prediction Classes
                 logits = outputs[1].detach().cpu().numpy()
                 pred = np.where(logits>=0, 1, 0)

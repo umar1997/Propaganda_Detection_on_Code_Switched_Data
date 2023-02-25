@@ -80,6 +80,8 @@ def make_json_files(X_train, X_val, X_test, data):
 
 if __name__ == '__main__':
 
+    seed = 42
+    np.random.seed(seed)
     techniques_file = '../techniques.json'
     json_file = 'dataset.json'
     techniques = read_techniques(techniques_file)
