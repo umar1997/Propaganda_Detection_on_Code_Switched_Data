@@ -141,6 +141,9 @@ if __name__ == '__main__':
     if hyper_params['model_run'] == 'BERT':
         hyper_params['model_type'] = 'bert-base-cased'
         hyper_params['tokenizer_type'] = 'bert-base-cased'
+    if hyper_params['model_run'] == 'BERT_TRANSLATED':
+        hyper_params['model_type'] = 'bert-base-cased'
+        hyper_params['tokenizer_type'] = 'bert-base-cased'
     
 
     ################################################## LOG FILE SET UP
@@ -233,6 +236,7 @@ run_model(hyper_params, logger_object, paths)
 
 
     # BERT                              bert-base-cased
+    # BERT_TRANSLATED                   bert-base-cased
     # Multilingual_BERT                 bert-base-multilingual-cased
     # RuBERT
     # XLM_RoBerta                       xlm-roberta-base
@@ -242,7 +246,7 @@ run_model(hyper_params, logger_object, paths)
 
 script = """
 python main.py \
-    --model_run XLM_RoBerta \
+    --model_run BERT_TRANSLATED \
     --model_type default \
     --tokenizer_type default \
     --max_seq_length 256 \

@@ -64,21 +64,28 @@ class Inferencer:
         return text
 
     def read_json_to_csv(self,):
+        """
+        For BERT and BERT_TRANSLATED we will test on the translated Code-Switched Text
+        """
 
         with open(self.paths["Testing_Data"], 'r') as f:
             data = json.loads(f.read())
 
         data_dict = dict()
         for i, (_, example) in enumerate(data.items()):
-            text = self.clean_text(example['text'])
+
+            if (self.hyper_params['model_run'] == 'BERT_TRANSLATED') or (self.hyper_params['model_run'] == 'BERT'):
+                text = self.clean_text(example['translation'])
+            else:
+                text = self.clean_text(example['text'])
             list_labels = example['labels']
 
             data_dict[i] = {'text' : text, 'technique' : [], 'text_fragment' : []}
             for label in list_labels:
                 technique = label['technique']
                 fragment = self.clean_text(label['text_fragment'])
-                if fragment not in text:
-                    raise Exception('Fragment cleaned different from text cleaned')
+                # if fragment not in text:
+                #     raise Exception('Fragment cleaned different from text cleaned')
                 data_dict[i]['technique'].append(technique)
                 data_dict[i]['text_fragment'].append(fragment)
                 

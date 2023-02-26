@@ -60,12 +60,14 @@ class Dataset_Preparation():
     def read_json_files_to_df(self, json_file):
         """
         Read file from json format and convert into pandas datatframe.
+        -> There is no need for the text fragment as we don't use it later on for the model
+        BERT is trained on MEME Text Data, whereas BERT_TRANSLATED is trained on translated text.
         """
         with open(json_file, 'r') as f:
                 data = json.loads(f.read())
 
 
-        if (self.hyper_params['model_run'] == 'BERT') and (self.hyper_params['training']):
+        if self.hyper_params['model_run'] == 'BERT':
             data_dict = dict()
             for i, example in enumerate(data):
                 text = self.clean_text(example['text'])
@@ -77,6 +79,23 @@ class Dataset_Preparation():
                     fragment = self.clean_text(label['text_fragment'])
                     if fragment not in text:
                         raise Exception('Fragment cleaned different from text cleaned')
+                    data_dict[i]['technique'].append(technique)
+                    data_dict[i]['text_fragment'].append(fragment)
+                    
+                    assert len(data_dict[i]['technique']) == len (data_dict[i]['text_fragment'])
+
+            data_df = pd.DataFrame(data_dict).transpose()
+
+        elif self.hyper_params['model_run'] == 'BERT_TRANSLATED':
+            data_dict = dict()
+            for i, (_, example) in enumerate(data.items()):
+                text = self.clean_text(example['translation'])
+                list_labels = example['labels']
+
+                data_dict[i] = {'text' : text, 'technique' : [], 'text_fragment' : []}
+                for label in list_labels:
+                    technique = label['technique']
+                    fragment = self.clean_text(label['text_fragment'])
                     data_dict[i]['technique'].append(technique)
                     data_dict[i]['text_fragment'].append(fragment)
                     
@@ -101,7 +120,6 @@ class Dataset_Preparation():
                     assert len(data_dict[i]['technique']) == len (data_dict[i]['text_fragment'])
 
             data_df = pd.DataFrame(data_dict).transpose()
-
         return data_df
 
 
