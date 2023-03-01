@@ -1394,6 +1394,31 @@
         ],
         "translation": "Not Shahzeb Khanzada, he says in every program that first, what is this homework, not all PTI people, there will be no justice. Masters of the Uterine I will now change my statement in a moment"
     },
+    "650": {
+        "id": "650",
+        "text": "No I don't support JI or JUI. Kya sirf JI aur JUI waly Muslim hai?\n\nMajority muslims are against transgender and homosexuality. You guys should be against it too pr Aurat march scheme exposed hone k bad ab transgender scheme laaye tum liberals",
+        "labels": [
+            {
+                "start_index": "113",
+                "end_index": "126",
+                "text_fragment": "homosexuality",
+                "technique": "Loaded Language"
+            },
+            {
+                "start_index": "68",
+                "end_index": "161",
+                "text_fragment": "Majority muslims are against transgender and homosexuality. You guys should be against it too",
+                "technique": "Bandwagon"
+            },
+            {
+                "start_index": "68",
+                "end_index": "243",
+                "text_fragment": "Majority muslims are against transgender and homosexuality. You guys should be against it too pr Aurat march scheme exposed hone k bad ab transgender scheme laaye tum liberals",
+                "technique": "Smears"
+            }
+        ],
+        "translation": "No I do not support Jamaat-e-Islami or JUI. Is Sarf a Muslim with JI and JUI?\n\nMajority of Muslims are against transgender and homosexuality. You guys should also be against this and the woman march scam has been exposed now bring the transgender scam you liberals"
+    },
     "439": {
         "id": "439",
         "text": "Education is so overhyped. Zaheer Jaffer bhi bahar se parh ke aaya tha lekin phir bhi kya kia. Upbringing is more important.",

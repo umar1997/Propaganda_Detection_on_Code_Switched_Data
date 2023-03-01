@@ -161,7 +161,7 @@ if __name__ == '__main__':
             if i == (len(hyper_params) - 1):
                 logger_meta.warning("{}: {}\n".format(k, v))
             else:
-                logger_meta.warning("{}: {}".format(k, v))
+                logger_meta.warning("{}: {}\n".format(k, v))
     else:
         logger_meta = None
         logger_progress = None
@@ -191,6 +191,7 @@ def run_model(hyper_params, logger_object, paths):
         model = model.to(device)
         print('##################################################')
         if not hyper_params["debugging"]:
+            logger_meta.warning("Vocab Size: {}\n".format(tokenizer.vocab_size))
             logger_progress.critical('Model + Tokenizer Initialized')
 
         ##################################################  DATA PROCESSING
