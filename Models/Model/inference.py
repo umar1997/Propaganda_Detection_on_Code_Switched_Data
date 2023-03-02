@@ -38,66 +38,9 @@ class Inferencer:
 
         self.model = self.model.to(self.device)
         self.model.eval()
-    
-    def clean_text(self, text):
-        """
-        Clean the text of data
-        """
-        punctuation_list  = string.punctuation  # !"#$%&'()*+,-./:;<=>?@[\]^_`{|}~
-        acceptable_list = "?\"\'().,!%"
-        remove_list = list(filter(lambda punctuation_list: punctuation_list[0] not in acceptable_list, punctuation_list))
-        remove_list.append('•')
+        print('##################################################')
 
-        text = text.replace('\n', ' ')
-        has_any_remove = any([char in remove_list for char in text])
-        if has_any_remove:
-            for r in remove_list:
-                if r in text:
-                    text = text.replace(r, ' ')
-        has_any_accept = any([char in acceptable_list for char in text])
-        if has_any_accept:
-            for a in acceptable_list:
-                if a in text and a not in "\"\'":
-                    text = re.sub(re.escape(a) + r"{2,}", a,text)
-                    text = text.replace(a, a+' ')
-        text = re.sub(r' {2,}', ' ',text)
-        return text
 
-    def read_json_to_csv(self,):
-        """
-        For BERT and BERT_TRANSLATED we will test on the translated Code-Switched Text
-        """
-
-        with open(self.paths["Testing_Data"], 'r') as f:
-            data = json.loads(f.read())
-
-        data_dict = dict()
-        for i, (_, example) in enumerate(data.items()):
-
-            if (self.hyper_params['model_run'] == 'BERT_TRANSLATED') or (self.hyper_params['model_run'] == 'BERT'):
-                text = self.clean_text(example['translation'])
-            else:
-                text = self.clean_text(example['text'])
-            list_labels = example['labels']
-
-            data_dict[i] = {'text' : text, 'technique' : [], 'text_fragment' : []}
-            for label in list_labels:
-                technique = label['technique']
-                fragment = self.clean_text(label['text_fragment'])
-                # if fragment not in text:
-                #     raise Exception('Fragment cleaned different from text cleaned')
-                data_dict[i]['technique'].append(technique)
-                data_dict[i]['text_fragment'].append(fragment)
-                
-                assert len(data_dict[i]['technique']) == len (data_dict[i]['text_fragment'])
-
-        data_df = pd.DataFrame(data_dict).transpose()
-        return data_df
-
-    def get_test_data(self,):
-
-        df_test = self.read_json_to_csv()
-        return df_test
 
     def get_predictions(self, df):
 
@@ -163,7 +106,7 @@ class Inferencer:
         return classificationReport, hamming_score, exact_match_ratio
     
     def run(self,):
-        df_test = self.get_test_data()
+        df_test = self.hyper_params['df_test']
         self.get_model_and_tokenizer()
         predicted_techniques, original_techniques, gold_labels_list, pred_labels_list = self.get_predictions(df_test)
         classificationReport, hamming_score, exact_match_ratio = self.get_evaluations(gold_labels_list, pred_labels_list)

@@ -28,8 +28,10 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     # ADD ARGUEMENTS
-    parser.add_argument("--model_run", default='Bert_Softmax', type=str,
-                        help="valid values: Bert_Softmax")
+    parser.add_argument("--domain_type", default='CS', type=str,
+                        help="valid values: MEMES, ENGLISH, CS")
+    parser.add_argument("--model_run", default='BERT', type=str,
+                        help="valid values: BERT")
     parser.add_argument("--model_type", default='bert-base-cased', type=str,
                         help="valid values: bert-base-cased")
     parser.add_argument("--tokenizer_type", default='bert-base-cased', type=str,
@@ -65,6 +67,7 @@ if __name__ == '__main__':
 
     global_args = parser.parse_args()
 
+    print('##################################################')
     LogFileExist = os.path.exists(os.getcwd() + '/Log_Files')
     ModelFileExist = os.path.exists(os.getcwd() + '/Model_Files')
     if not LogFileExist:
@@ -72,7 +75,7 @@ if __name__ == '__main__':
     if not ModelFileExist:
         os.makedirs(os.getcwd() + '/Model_Files')
 
-
+    print('1. MODEL AND LOG FILE CREATED')
     paths = {
             "Techniques":"./techniques.json",
             "Log_Folder":"./Log_Files/",
@@ -81,11 +84,12 @@ if __name__ == '__main__':
             "Validation_Data": "./Data_Files/Splits/val_split.json",
             "Testing_Data": "./Data_Files/Splits/test_split.json",
             "Meme_Training_Data": "./Data_Files/Meme_Data_Splits/training_set_.json",
-            "Meme_Validation_Data": "./Data_Files/Meme_Data_Splits/dev_set_.json",
             "Log_Folder":"./Log_Files/"
     }
+    print('2. PATHS CREATED')
 
     hyper_params = {
+        "domain_type": global_args.domain_type,
         "model_run": global_args.model_run,
         "model_type": global_args.model_type,
         "tokenizer_type": global_args.tokenizer_type,
@@ -106,6 +110,7 @@ if __name__ == '__main__':
         "log_file": None,
         "datetime": None
     }
+    print('3. HYPER_PARAMS CREATED')
 
 
     
@@ -120,31 +125,74 @@ if __name__ == '__main__':
     current_datetime = datetime.now()
     date_time = current_datetime.strftime("%d-%m-%Y_%H:%M:%S")
     hyper_params['datetime'] = date_time
+    print('4. SEEDS AND DATATIME SET')
 
     ################################################## MODELS 
 
-    # 1. Translation with BERT @ Memes          'bert-base-cased'
-    # 2. mBERT                                  'bert-base-multilingual-cased'
-    # 3. RUBERT
-    # 4. XLM RoBerta                            'xlm-roberta-base'
-    # 5. XLM RoBerta Roman Urdu fine-tuned      'Aimlab/xlm-roberta-roman-urdu-finetuned'
+    # 1. BERT_MEMES                                     'bert-base-cased'
+    # 2. mBERT_MEMES                                    'bert-base-multilingual-cased'
+    # 3. XLM_RoBerta_MEMES                              'xlm-roberta-base'
+    # 4. BERT_ENGLISH                                   'bert-base-cased'
+    # 5. mBERT_ENGLISH                                  'bert-base-multilingual-cased'
+    # 6. XLM_RoBerta_ENGLISH                            'xlm-roberta-base'
+    # 7. BERT                                           'bert-base-cased'
+    # 8. mBERT                                          'bert-base-multilingual-cased'
+    # 9. XLM_RoBerta                                    'xlm-roberta-base'
+    # 10. RUBERT
+    # 11. XLM_RoBerta_Roman_Urdu                        'Aimlab/xlm-roberta-roman-urdu-finetuned'
 
-    if hyper_params['model_run'] == 'XLM_RoBerta_Roman_Urdu':
-        hyper_params['model_type'] = 'Aimlab/xlm-roberta-roman-urdu-finetuned'
-        hyper_params['tokenizer_type'] = 'Aimlab/xlm-roberta-roman-urdu-finetuned'
-    if hyper_params['model_run'] == 'Multilingual_BERT':
-        hyper_params['model_type'] = 'bert-base-multilingual-cased'
-        hyper_params['tokenizer_type'] = 'bert-base-multilingual-cased'
-    if hyper_params['model_run'] == 'XLM_RoBerta':
-        hyper_params['model_type'] = 'xlm-roberta-base'
-        hyper_params['tokenizer_type'] = 'xlm-roberta-base'
-    if hyper_params['model_run'] == 'BERT':
-        hyper_params['model_type'] = 'bert-base-cased'
-        hyper_params['tokenizer_type'] = 'bert-base-cased'
-    if hyper_params['model_run'] == 'BERT_TRANSLATED':
-        hyper_params['model_type'] = 'bert-base-cased'
-        hyper_params['tokenizer_type'] = 'bert-base-cased'
-    
+    if hyper_params['domain_type'] == 'MEMES':
+        df_train = Dataset_Preparation.read_json_files_to_df(paths['Meme_Training_Data'],hyper_params, 'Training')
+        df_val = Dataset_Preparation.read_json_files_to_df(paths['Validation_Data'],hyper_params, 'Validation')
+        df_test = Dataset_Preparation.read_json_files_to_df(paths['Testing_Data'],hyper_params, 'Testing')
+        if hyper_params['model_run'] == 'BERT_MEMES':
+            hyper_params['model_type'] = 'bert-base-cased'
+            hyper_params['tokenizer_type'] = 'bert-base-cased'
+        elif hyper_params['model_run'] == 'mBERT_MEMES':
+            hyper_params['model_type'] = 'bert-base-multilingual-cased'
+            hyper_params['tokenizer_type'] = 'bert-base-multilingual-cased'
+        elif hyper_params['model_run'] == 'XLM_RoBerta_MEMES':
+            hyper_params['model_type'] = 'xlm-roberta-base'
+            hyper_params['tokenizer_type'] = 'xlm-roberta-base'
+        else:
+            raise Exception('Model and Domain Type don\'t match')
+
+    if hyper_params['domain_type'] == 'ENGLISH':
+        df_train = Dataset_Preparation.read_json_files_to_df(paths['Training_Data'],hyper_params, 'Training')
+        df_val = Dataset_Preparation.read_json_files_to_df(paths['Validation_Data'],hyper_params, 'Validation')
+        df_test = Dataset_Preparation.read_json_files_to_df(paths['Testing_Data'],hyper_params, 'Testing')
+        if hyper_params['model_run'] == 'BERT_ENGLISH':
+            hyper_params['model_type'] = 'bert-base-cased'
+            hyper_params['tokenizer_type'] = 'bert-base-cased'
+        elif hyper_params['model_run'] == 'mBERT_ENGLISH':
+            hyper_params['model_type'] = 'bert-base-multilingual-cased'
+            hyper_params['tokenizer_type'] = 'bert-base-multilingual-cased'
+        elif hyper_params['model_run'] == 'XLM_RoBerta_ENGLISH':
+            hyper_params['model_type'] = 'xlm-roberta-base'
+            hyper_params['tokenizer_type'] = 'xlm-roberta-base'
+        else:
+            raise Exception('Model and Domain Type don\'t match')
+
+    if hyper_params['domain_type'] == 'CS':
+        df_train = Dataset_Preparation.read_json_files_to_df(paths['Training_Data'],hyper_params, 'Training')
+        df_val = Dataset_Preparation.read_json_files_to_df(paths['Validation_Data'],hyper_params, 'Validation')
+        df_test = Dataset_Preparation.read_json_files_to_df(paths['Testing_Data'],hyper_params, 'Testing')
+        if hyper_params['model_run'] == 'BERT':
+            hyper_params['model_type'] = 'bert-base-cased'
+            hyper_params['tokenizer_type'] = 'bert-base-cased'
+        elif hyper_params['model_run'] == 'mBERT':
+            hyper_params['model_type'] = 'bert-base-multilingual-cased'
+            hyper_params['tokenizer_type'] = 'bert-base-multilingual-cased'
+        elif hyper_params['model_run'] == 'XLM_RoBerta':
+            hyper_params['model_type'] = 'xlm-roberta-base'
+            hyper_params['tokenizer_type'] = 'xlm-roberta-base'
+        elif hyper_params['model_run'] == 'XLM_RoBerta_Roman_Urdu':
+            hyper_params['model_type'] = 'Aimlab/xlm-roberta-roman-urdu-finetuned'
+            hyper_params['tokenizer_type'] = 'Aimlab/xlm-roberta-roman-urdu-finetuned'
+        else:
+            raise Exception('Model and Domain Type don\'t match')
+
+    print('5. DATAFRAMES, MODEL, TOKENIZERS ASSIGNED')
 
     ################################################## LOG FILE SET UP
     
@@ -161,18 +209,34 @@ if __name__ == '__main__':
             if i == (len(hyper_params) - 1):
                 logger_meta.warning("{}: {}\n".format(k, v))
             else:
-                logger_meta.warning("{}: {}\n".format(k, v))
+                logger_meta.warning("{}: {}".format(k, v))
     else:
         logger_meta = None
         logger_progress = None
         logger_results = None
     
+    hyper_params['df_train'] = df_train
+    hyper_params['df_val'] = df_val
+    hyper_params['df_test'] = df_test
+
+    print()
+    print('Training Datatset: {}'.format(len(hyper_params['df_train'])))
+    print('Validation Datatset: {}'.format(len(hyper_params['df_val'])))
+    print('Testing Datatset: {}'.format(len(hyper_params['df_test'])))
+    print()
+
+    logger_meta.warning('Training Datatset: {}'.format(len(hyper_params['df_train'])))
+    logger_meta.warning('Validation Datatset: {}'.format(len(hyper_params['df_val'])))
+    logger_meta.warning('Testing Datatset: {}'.format(len(hyper_params['df_test'])))
+    
     logger_object = [logger_meta, logger_progress, logger_results]
+    print('6. LOG FILE INITIALIZED')
 
 
 ############################################################# RUN MODELS
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<                 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 def run_model(hyper_params, logger_object, paths):
+    print('##################################################')
     logger_meta, logger_progress, logger_results = logger_object
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -190,6 +254,7 @@ def run_model(hyper_params, logger_object, paths):
         model = Propaganda_Detection(checkpoint_model=checkpoint_model, num_tags=len(techniques), device=device)
         model = model.to(device)
         print('##################################################')
+
         if not hyper_params["debugging"]:
             logger_meta.warning("Vocab Size: {}\n".format(tokenizer.vocab_size))
             logger_progress.critical('Model + Tokenizer Initialized')
@@ -197,6 +262,7 @@ def run_model(hyper_params, logger_object, paths):
         ##################################################  DATA PROCESSING
         dataPrep = Dataset_Preparation(paths, tokenizer, hyper_params, techniques)
         train_dataloader, valid_dataloader = dataPrep.run()
+
         if not hyper_params["debugging"]:
             logger_progress.critical('Tokenizing sentences and encoding labels')
             logger_progress.critical('Data Loaders Created')
@@ -205,24 +271,28 @@ def run_model(hyper_params, logger_object, paths):
         ##################################################  TRAINING
         if not hyper_params["debugging"]:
             logger_progress.critical('Training Started')
+
         train = Training(paths, model, tokenizer, hyper_params, train_dataloader, valid_dataloader, techniques, logger_results)
         train.run()
+
         if not hyper_params["debugging"]:
             logger_progress.critical('Training Finished')
             logger_progress.critical('Model Saved')
     else:
         ################################################# INFERENCE
-        print('##################################################')
         if not hyper_params["debugging"]:
             logger_progress.critical('Starting Inference')
+
         inference = Inferencer(paths, checkpoint_tokenizer, checkpoint_model, hyper_params, techniques, logger_results)
         inference.run()
+
         if not hyper_params["debugging"]:
             logger_progress.critical('Inference Complete')
 
     return
 # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<                 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
+print('7. MODEL RUN FUNCTION')
 run_model(hyper_params, logger_object, paths)
 
 
@@ -236,18 +306,30 @@ run_model(hyper_params, logger_object, paths)
     # print('We will use the GPU:', torch.cuda.get_device_name(0))
 
 
-    # BERT                              bert-base-cased
-    # BERT_TRANSLATED                   bert-base-cased
-    # Multilingual_BERT                 bert-base-multilingual-cased
-    # RuBERT
-    # XLM_RoBerta                       xlm-roberta-base
-    # XLM_RoBerta_Roman_Urdu            Aimlab/xlm-roberta-roman-urdu-finetuned
+    # Domain Type
+    # 1. MEMES
+    # 2. ENGLISH
+    # 3. CS
+
+    # Models
+    # 1. BERT_MEMES                                     'bert-base-cased'
+    # 2. mBERT_MEMES                                    'bert-base-multilingual-cased'
+    # 3. XLM_RoBerta_MEMES                              'xlm-roberta-base'
+    # 4. BERT_ENGLISH                                   'bert-base-cased'
+    # 5. mBERT_ENGLISH                                  'bert-base-multilingual-cased'
+    # 6. XLM_RoBerta_ENGLISH                            'xlm-roberta-base'
+    # 7. BERT                                           'bert-base-cased'
+    # 8. mBERT                                          'bert-base-multilingual-cased'
+    # 9. XLM_RoBerta                                    'xlm-roberta-base'
+    # 10. RUBERT
+    # 11. XLM_RoBerta_Roman_Urdu                        'Aimlab/xlm-roberta-roman-urdu-finetuned'
     
     # nvidia-smi | grep 'python' | awk '{ print $5 }' | xargs -n1 kill -9
 
 script = """
 python main.py \
-    --model_run BERT_TRANSLATED \
+    --domain_type MEMES \
+    --model_run BERT_MEMES \
     --model_type default \
     --tokenizer_type default \
     --max_seq_length 256 \

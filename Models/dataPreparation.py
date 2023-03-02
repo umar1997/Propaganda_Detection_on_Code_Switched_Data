@@ -8,17 +8,11 @@ import torch
 from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler
 from keras_preprocessing.sequence import pad_sequences
 
-class Dataset_Preparation():
+class Dataset_Preparation:
     def __init__(self, paths, tokenizer, hyper_params, techniques):
         self.paths = paths
         self.tokenizer = tokenizer
         self.hyper_params = hyper_params
-        if self.hyper_params['model_run'] == 'BERT':
-            self.train_dataset = self.paths['Meme_Training_Data']
-            self.val_dataset = self.paths['Meme_Validation_Data']
-        else:
-            self.train_dataset = self.paths['Training_Data']
-            self.val_dataset = self.paths['Validation_Data']
         self.techniques = techniques
 
     @staticmethod
@@ -31,8 +25,8 @@ class Dataset_Preparation():
         
         return techniques
     
-
-    def clean_text(self, text):
+    @staticmethod
+    def clean_text(text):
         """
         Clean the text of data
         """
@@ -54,31 +48,33 @@ class Dataset_Preparation():
                     text = re.sub(re.escape(a) + r"{2,}", a,text)
                     text = text.replace(a, a+' ')
         text = re.sub(r' {2,}', ' ',text)
+        text = text.strip()
         return text
 
-
-    def read_json_files_to_df(self, json_file):
+    @staticmethod
+    def read_json_files_to_df(json_file, hyper_params, split):
         """
         Read file from json format and convert into pandas datatframe.
         -> There is no need for the text fragment as we don't use it later on for the model
-        BERT is trained on MEME Text Data, whereas BERT_TRANSLATED is trained on translated text.
+        * MEMES trained on Meme Training Data, Validated on CS Validation Data
+        * ENGLISH trained on CS Training Translated Data, Validated on CS Validation Data
+        * CS trained on CS Training Data, Validated on CS Validation Data
         """
         with open(json_file, 'r') as f:
                 data = json.loads(f.read())
 
-
-        if self.hyper_params['model_run'] == 'BERT':
+        if (hyper_params['domain_type'] == 'MEMES') and (split=='Training'):
             data_dict = dict()
             for i, example in enumerate(data):
-                text = self.clean_text(example['text'])
+                text = Dataset_Preparation.clean_text(example['text'])
                 list_labels = example['labels']
 
                 data_dict[i] = {'text' : text, 'technique' : [], 'text_fragment' : []}
                 for label in list_labels:
                     technique = label['technique']
-                    fragment = self.clean_text(label['text_fragment'])
-                    if fragment not in text:
-                        raise Exception('Fragment cleaned different from text cleaned')
+                    fragment = Dataset_Preparation.clean_text(label['text_fragment'])
+                    # if fragment not in text:
+                    #     raise Exception('Fragment cleaned different from text cleaned')
                     data_dict[i]['technique'].append(technique)
                     data_dict[i]['text_fragment'].append(fragment)
                     
@@ -86,32 +82,34 @@ class Dataset_Preparation():
 
             data_df = pd.DataFrame(data_dict).transpose()
 
-        elif self.hyper_params['model_run'] == 'BERT_TRANSLATED':
+        elif (hyper_params['domain_type'] == 'ENGLISH') and (split=='Training'):
             data_dict = dict()
             for i, (_, example) in enumerate(data.items()):
-                text = self.clean_text(example['translation'])
+                text = Dataset_Preparation.clean_text(example['translation'])
                 list_labels = example['labels']
 
                 data_dict[i] = {'text' : text, 'technique' : [], 'text_fragment' : []}
                 for label in list_labels:
                     technique = label['technique']
-                    fragment = self.clean_text(label['text_fragment'])
+                    fragment = Dataset_Preparation.clean_text(label['text_fragment'])
                     data_dict[i]['technique'].append(technique)
                     data_dict[i]['text_fragment'].append(fragment)
                     
                     assert len(data_dict[i]['technique']) == len (data_dict[i]['text_fragment'])
 
             data_df = pd.DataFrame(data_dict).transpose()
+
+        # ALL VALIDATIONS AND ALL TESTS AND TRAINING CS    
         else:
             data_dict = dict()
             for i, (_, example) in enumerate(data.items()):
-                text = self.clean_text(example['text'])
+                text = Dataset_Preparation.clean_text(example['text'])
                 list_labels = example['labels']
 
                 data_dict[i] = {'text' : text, 'technique' : [], 'text_fragment' : []}
                 for label in list_labels:
                     technique = label['technique']
-                    fragment = self.clean_text(label['text_fragment'])
+                    fragment = Dataset_Preparation.clean_text(label['text_fragment'])
                     if fragment not in text:
                         raise Exception('Fragment cleaned different from text cleaned')
                     data_dict[i]['technique'].append(technique)
@@ -198,12 +196,12 @@ class Dataset_Preparation():
 
     def run(self,):
 
-        train_df = self.read_json_files_to_df(self.train_dataset)
+        train_df = self.hyper_params['df_train']
         train_tokenized_words_list, train_labels_list = self.get_text_and_labels(train_df)
         train_input_ids, train_tags, train_attention_masks = self.get_encoded_data(train_tokenized_words_list, train_labels_list)
         train_input_ids, train_tag, train_masks = self.convert_to_tensors(train_input_ids, train_tags, train_attention_masks)
 
-        val_df = self.read_json_files_to_df(self.val_dataset)
+        val_df = self.hyper_params['df_val']
         val_tokenized_words_list, val_labels_list = self.get_text_and_labels(val_df)
         val_input_ids, val_tags, val_attention_masks = self.get_encoded_data(val_tokenized_words_list, val_labels_list)
         val_input_ids, val_tag, val_masks = self.convert_to_tensors(val_input_ids, val_tags, val_attention_masks)
@@ -212,11 +210,9 @@ class Dataset_Preparation():
 
         print('-'*30)
         print('DATA INFORMATION')
-        print('Training Datatset: {}'.format(len(train_df)))
         print('Training Batch Size: {}'.format(self.hyper_params['training_batch_size']))
         print('Training DataLoader: {}'.format(len(train_dataloader)))
         print()
-        print('Validation Datatset: {}'.format(len(val_df)))
         print('Validation Batch Size: {}'.format(self.hyper_params['validation_batch_size']))
         print('Validation DataLoader: {}'.format(len(valid_dataloader)))
         print('-'*30)
@@ -239,7 +235,6 @@ if __name__ == '__main__':
             "Training_Data": "./Data_Files/Splits/train_split.json",
             "Validation_Data": "./Data_Files/Splits/val_split.json",
             "Meme_Training_Data": "./Data_Files/Meme_Data_Splits/training_set_.json",
-            "Meme_Validation_Data": "./Data_Files/Meme_Data_Splits/dev_set_.json",
     }
 
     hyper_params = {
