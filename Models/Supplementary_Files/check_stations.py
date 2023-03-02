@@ -1,6 +1,7 @@
 # https://stackoverflow.com/questions/12202587/automatically-enter-ssh-password-with-script
 # https://docs.paramiko.org/en/stable/api/client.html
 
+# pip install paramiko
 import paramiko
 
 ssh_client = paramiko.SSHClient()

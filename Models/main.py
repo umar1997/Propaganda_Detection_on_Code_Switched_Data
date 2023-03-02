@@ -328,13 +328,13 @@ run_model(hyper_params, logger_object, paths)
 
 script = """
 python main.py \
-    --domain_type MEMES \
-    --model_run BERT_MEMES \
+    --domain_type CS \
+    --model_run XLM_RoBerta_Roman_Urdu \
     --model_type default \
     --tokenizer_type default \
     --max_seq_length 256 \
-    --training_batch_size 12 \
-    --validation_batch_size 12 \
+    --training_batch_size 16 \
+    --validation_batch_size 16 \
     --learning_rate 3e-5 \
     --num_epochs 10 \
     --seed 42 \
