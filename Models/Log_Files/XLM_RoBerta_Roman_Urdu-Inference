@@ -16,16 +16,16 @@
 [WARNING] - META - max_grad_norm: 1.0
 [WARNING] - META - full_finetuning: True
 [WARNING] - META - debugging: False
-[WARNING] - META - log_file: ./Log_Files/XLM_RoBerta_Roman_Urdu-Inference-06-03-2023_16:41:55
-[WARNING] - META - datetime: 06-03-2023_16:41:55
+[WARNING] - META - log_file: ./Log_Files/XLM_RoBerta_Roman_Urdu-Inference
+[WARNING] - META - datetime: 07-03-2023_16:39:53
 
 [WARNING] - META - Training Datatset: 786
 [WARNING] - META - Validation Datatset: 89
 [WARNING] - META - Testing Datatset: 155
-[CRITICAL] - PORGRESS - 06-03-2023 16:41:55 - Starting Inference
-[INFO] - RESULTS - inference.py.<114> - Validation Hamming Score: 0.91  |  Validation Exact Match Ratio: 0.13548387096774195
-[INFO] - RESULTS - inference.py.<115> - Classification Report:
-[INFO] - RESULTS - inference.py.<116> - 
+[CRITICAL] - PORGRESS - 07-03-2023 16:39:53 - Starting Inference
+[INFO] - RESULTS - inference.py.<116> - Validation Hamming Score: 0.3749462365591398  |  Validation Exact Match Ratio: 0.13548387096774195 |  Validation Accuracy Score: 0.91
+[INFO] - RESULTS - inference.py.<117> - Classification Report:
+[INFO] - RESULTS - inference.py.<118> - 
                                                      precision    recall  f1-score   support
 
                                     Loaded Language       0.67      0.72      0.70        68
@@ -54,4 +54,4 @@ Misrepresentation of Someone's Position (Straw Man)       0.00      0.00      0.
                                        weighted avg       0.55      0.49      0.50       329
                                         samples avg       0.53      0.42      0.44       329
 
-[CRITICAL] - PORGRESS - 06-03-2023 16:46:53 - Inference Complete
+[CRITICAL] - PORGRESS - 07-03-2023 16:40:03 - Inference Complete

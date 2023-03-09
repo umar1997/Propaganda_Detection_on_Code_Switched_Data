@@ -16,16 +16,16 @@
 [WARNING] - META - max_grad_norm: 1.0
 [WARNING] - META - full_finetuning: True
 [WARNING] - META - debugging: False
-[WARNING] - META - log_file: ./Log_Files/BERT_MEMES-Inference-06-03-2023_15:46:11
-[WARNING] - META - datetime: 06-03-2023_15:46:11
+[WARNING] - META - log_file: ./Log_Files/BERT_MEMES-Inference
+[WARNING] - META - datetime: 07-03-2023_16:54:15
 
 [WARNING] - META - Training Datatset: 688
 [WARNING] - META - Validation Datatset: 89
 [WARNING] - META - Testing Datatset: 155
-[CRITICAL] - PORGRESS - 06-03-2023 15:46:11 - Starting Inference
-[INFO] - RESULTS - inference.py.<114> - Validation Hamming Score: 0.8983870967741936  |  Validation Exact Match Ratio: 0.08387096774193549
-[INFO] - RESULTS - inference.py.<115> - Classification Report:
-[INFO] - RESULTS - inference.py.<116> - 
+[CRITICAL] - PORGRESS - 07-03-2023 16:54:15 - Starting Inference
+[INFO] - RESULTS - inference.py.<116> - Validation Hamming Score: 0.18494623655913978  |  Validation Exact Match Ratio: 0.08387096774193549 |  Validation Accuracy Score: 0.8983870967741936
+[INFO] - RESULTS - inference.py.<117> - Classification Report:
+[INFO] - RESULTS - inference.py.<118> - 
                                                      precision    recall  f1-score   support
 
                                     Loaded Language       0.49      0.56      0.52        68
@@ -54,4 +54,4 @@ Misrepresentation of Someone's Position (Straw Man)       0.00      0.00      0.
                                        weighted avg       0.44      0.18      0.21       329
                                         samples avg       0.28      0.15      0.18       329
 
-[CRITICAL] - PORGRESS - 06-03-2023 15:50:33 - Inference Complete
+[CRITICAL] - PORGRESS - 07-03-2023 16:54:21 - Inference Complete

@@ -36,22 +36,22 @@ from sklearn.metrics import classification_report
 def get_exact_match_ratio(expected, predicted): # aka Subset Accuracy
     return accuracy_score(expected, predicted, normalize=True, sample_weight=None)
 
-def get_hamming_score(expected, predicted):
-    hamming_score = sum(np.where(expected==predicted, True, False).reshape(-1))/predicted.size
-    return hamming_score
+def get_accuracy_score(expected, predicted):
+    accuracy_score = sum(np.where(expected==predicted, True, False).reshape(-1))/predicted.size
+    return accuracy_score
 
 def get_classification_report(expected, predicted, labels):
     return classification_report(expected, predicted, target_names=labels)
 
-def hamming_score(y_true, y_pred):
+def get_hamming_score(expected, predicted):
     '''
     Compute the Hamming score (a.k.a. label-based accuracy) for the multi-label case
     https://stackoverflow.com/q/32239577/395857
     '''
     acc_list = []
-    for i in range(y_true.shape[0]):
-        set_true = set( np.where(y_true[i])[0] )
-        set_pred = set( np.where(y_pred[i])[0] )
+    for i in range(expected.shape[0]):
+        set_true = set( np.where(expected[i])[0] )
+        set_pred = set( np.where(predicted[i])[0] )
         tmp_a = None
         if len(set_true) == 0 and len(set_pred) == 0:
             tmp_a = 1
@@ -62,9 +62,18 @@ def hamming_score(y_true, y_pred):
     return np.mean(acc_list)
 
 if __name__ == "__main__":
-    y_true = np.array([[1, 0, 1], [0, 0, 1], [1, 1, 1]])
-    y_pred = np.array([[1, 1, 0], [0, 0, 1], [1, 1, 1]])
+    y_true = np.array([[0,1,0],
+                   [0,1,1],
+                   [1,0,1],
+                   [0,0,1]])
 
+    y_pred = np.array([[0,1,1],
+                    [0,1,1],
+                    [0,1,0],
+                    [0,0,0]])
+
+    print(get_hamming_score(y_true, y_pred))
+    print(get_accuracy_score(y_true, y_pred))
 
 
 

@@ -186,12 +186,14 @@ class Training:
             validation_loss_values.append(avg_eval_loss)   
             
             
+            accuracy_score = get_accuracy_score(true_labels, predictions)
             hamming_score = get_hamming_score(true_labels, predictions)
             exact_match_ratio = get_exact_match_ratio(true_labels, predictions)
+            print('     Validation Accuracy Score: {}'.format(accuracy_score))
             print('     Validation Hamming Score: {}'.format(hamming_score))
             print('     Validation Exact Match Ratio: {}'.format(exact_match_ratio))
             if not self.hyper_params["debugging"]:
-                self.logger_results.info('Validation Hamming Score: {}  |  Validation Exact Match Ratio: {}'.format(hamming_score, exact_match_ratio))
+                self.logger_results.info('Validation Hamming Score: {}  |  Validation Exact Match Ratio: {} |  Validation Accuracy Score: {}'.format(hamming_score, exact_match_ratio, accuracy_score))
 
             if hamming_score >= self.checkpoint['best_hamming_score']:
                 self.checkpoint['best_hamming_score'] = hamming_score
@@ -212,7 +214,7 @@ class Training:
         labels_ = list(self.techniques.keys())
         classificationReport = get_classification_report(true_labels, predictions, labels_)
         if not self.hyper_params["debugging"]:
-            self.logger_results.info('Validation Hamming Score: {}  |  Validation Exact Match Ratio: {}'.format(hamming_score, exact_match_ratio))
+            self.logger_results.info('Validation Hamming Score: {}  |  Validation Exact Match Ratio: {} |  Validation Accuracy Score: {}'.format(hamming_score, exact_match_ratio, accuracy_score))
             self.logger_results.info('Classification Report:')
             self.logger_results.info('\n{}'.format(classificationReport))
 

@@ -23,6 +23,7 @@ class Propaganda_Detection(nn.Module):
                 output_attentions=True,
                 output_hidden_states=True)
             )
+            
         # self.model = AutoModelForSequenceClassification.from_pretrained(
         #     checkpoint_model,
         #     num_labels = num_tags

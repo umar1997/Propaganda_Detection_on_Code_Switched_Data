@@ -200,7 +200,7 @@ if __name__ == '__main__':
         if hyper_params["training"]:
             file_name = paths['Log_Folder'] + hyper_params['model_run'] + '-' + date_time #global_args.log_file
         else:
-            file_name = paths['Log_Folder'] + hyper_params['model_run'] + '-' + 'Inference-' + date_time
+            file_name = paths['Log_Folder'] + hyper_params['model_run'] + '-Inference'
         hyper_params['log_file'] = file_name
         logger_meta = get_logger(name='META', file_name=file_name, type='meta')
         logger_progress = get_logger(name='PORGRESS', file_name=file_name, type='progress')
@@ -225,9 +225,10 @@ if __name__ == '__main__':
     print('Testing Datatset: {}'.format(len(hyper_params['df_test'])))
     print()
 
-    logger_meta.warning('Training Datatset: {}'.format(len(hyper_params['df_train'])))
-    logger_meta.warning('Validation Datatset: {}'.format(len(hyper_params['df_val'])))
-    logger_meta.warning('Testing Datatset: {}'.format(len(hyper_params['df_test'])))
+    if not hyper_params["debugging"]:
+        logger_meta.warning('Training Datatset: {}'.format(len(hyper_params['df_train'])))
+        logger_meta.warning('Validation Datatset: {}'.format(len(hyper_params['df_val'])))
+        logger_meta.warning('Testing Datatset: {}'.format(len(hyper_params['df_test'])))
     
     logger_object = [logger_meta, logger_progress, logger_results]
     print('6. LOG FILE INITIALIZED')
@@ -327,9 +328,9 @@ run_model(hyper_params, logger_object, paths)
     # nvidia-smi | grep 'python' | awk '{ print $5 }' | xargs -n1 kill -9
 
 script = """
-python main.py \
-    --domain_type CS \
-    --model_run XLM_RoBerta_Roman_Urdu \
+python3 main.py \
+    --domain_type MEMES \
+    --model_run BERT_MEMES \
     --model_type default \
     --tokenizer_type default \
     --max_seq_length 256 \
@@ -344,6 +345,6 @@ python main.py \
     --scheduler LinearWarmup \
     --full_finetuning 1 \
     --training 1 \
-    --debugging 0
+    --debugging 1
 """
 

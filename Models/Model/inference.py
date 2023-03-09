@@ -95,23 +95,25 @@ class Inferencer:
 
         labels_ = list(self.techniques.keys())
 
+        accuracy_score = get_accuracy_score(gold_labels_list, pred_labels_list)
         hamming_score = get_hamming_score(gold_labels_list, pred_labels_list)
         exact_match_ratio = get_exact_match_ratio(gold_labels_list, pred_labels_list)
+        print('     Validation Accuracy Score: {}'.format(accuracy_score))
         print('     Validation Hamming Score: {}'.format(hamming_score))
         print('     Validation Exact Match Ratio: {}'.format(exact_match_ratio))
         classificationReport = get_classification_report(gold_labels_list, pred_labels_list, labels_)
         print('Classification Report\n')
         print(classificationReport)
 
-        return classificationReport, hamming_score, exact_match_ratio
+        return classificationReport, hamming_score, exact_match_ratio, accuracy_score
     
     def run(self,):
         df_test = self.hyper_params['df_test']
         self.get_model_and_tokenizer()
         predicted_techniques, original_techniques, gold_labels_list, pred_labels_list = self.get_predictions(df_test)
-        classificationReport, hamming_score, exact_match_ratio = self.get_evaluations(gold_labels_list, pred_labels_list)
+        classificationReport, hamming_score, exact_match_ratio, accuracy_score = self.get_evaluations(gold_labels_list, pred_labels_list)
         if not self.hyper_params["debugging"]:
-            self.logger_results.info('Validation Hamming Score: {}  |  Validation Exact Match Ratio: {}'.format(hamming_score, exact_match_ratio))
+            self.logger_results.info('Validation Hamming Score: {}  |  Validation Exact Match Ratio: {} |  Validation Accuracy Score: {}'.format(hamming_score, exact_match_ratio, accuracy_score))
             self.logger_results.info('Classification Report:')
             self.logger_results.info('\n{}'.format(classificationReport))
 

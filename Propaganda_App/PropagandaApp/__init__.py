@@ -24,11 +24,11 @@ with open(config["id2techniques"], "r") as fp:
     id2techniques = json.load(fp)
 
 # Comment these to stop loading model
-# model = Propaganda_Detection(checkpoint_model=config["checkpoint_model"], num_tags=len(id2techniques)+1)
-# model.load_state_dict(torch.load(config[ "model_path"]))
-# tokenizer = AutoTokenizer.from_pretrained(config["tokenizer_path"])
+model = Propaganda_Detection(checkpoint_model=config["checkpoint_model"], num_tags=len(id2techniques)+1)
+model.load_state_dict(torch.load(config[ "model_path"]))
+tokenizer = AutoTokenizer.from_pretrained(config["tokenizer_path"])
 
-# predict = Predict(config, model, tokenizer)
+predict = Predict(config, model, tokenizer)
 
 
 ##################################### Blueprints

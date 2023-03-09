@@ -1,5 +1,5 @@
-[WARNING] - META - domain_type: CS
-[WARNING] - META - model_run: BERT
+[WARNING] - META - domain_type: ENGLISH
+[WARNING] - META - model_run: BERT_ENGLISH
 [WARNING] - META - model_type: bert-base-cased
 [WARNING] - META - tokenizer_type: bert-base-cased
 [WARNING] - META - training: False
@@ -16,30 +16,30 @@
 [WARNING] - META - max_grad_norm: 1.0
 [WARNING] - META - full_finetuning: True
 [WARNING] - META - debugging: False
-[WARNING] - META - log_file: ./Log_Files/BERT-Inference-06-03-2023_16:36:40
-[WARNING] - META - datetime: 06-03-2023_16:36:40
+[WARNING] - META - log_file: ./Log_Files/BERT_ENGLISH-Inference
+[WARNING] - META - datetime: 07-03-2023_16:51:06
 
 [WARNING] - META - Training Datatset: 786
 [WARNING] - META - Validation Datatset: 89
 [WARNING] - META - Testing Datatset: 155
-[CRITICAL] - PORGRESS - 06-03-2023 16:36:41 - Starting Inference
-[INFO] - RESULTS - inference.py.<114> - Validation Hamming Score: 0.9003225806451612  |  Validation Exact Match Ratio: 0.0967741935483871
-[INFO] - RESULTS - inference.py.<115> - Classification Report:
-[INFO] - RESULTS - inference.py.<116> - 
+[CRITICAL] - PORGRESS - 07-03-2023 16:51:06 - Starting Inference
+[INFO] - RESULTS - inference.py.<116> - Validation Hamming Score: 0.2879569892473118  |  Validation Exact Match Ratio: 0.03870967741935484 |  Validation Accuracy Score: 0.8841935483870967
+[INFO] - RESULTS - inference.py.<117> - Classification Report:
+[INFO] - RESULTS - inference.py.<118> - 
                                                      precision    recall  f1-score   support
 
-                                    Loaded Language       0.58      0.72      0.64        68
+                                    Loaded Language       0.57      0.63      0.60        68
       Obfuscation, Intentional vagueness, Confusion       0.00      0.00      0.00         2
-                           Appeal to fear/prejudice       0.40      0.13      0.20        15
+                           Appeal to fear/prejudice       0.50      0.07      0.12        15
                                 Appeal to authority       0.00      0.00      0.00         2
                                        Whataboutism       0.00      0.00      0.00         6
                                             Slogans       0.00      0.00      0.00         7
-                          Exaggeration/Minimisation       0.50      0.33      0.40        51
-               Black-and-white Fallacy/Dictatorship       0.50      0.20      0.29         5
-                                             Smears       0.52      0.42      0.47        57
-                                              Doubt       1.00      0.17      0.29         6
+                          Exaggeration/Minimisation       0.34      0.20      0.25        51
+               Black-and-white Fallacy/Dictatorship       0.00      0.00      0.00         5
+                                             Smears       0.46      0.84      0.59        57
+                                              Doubt       0.00      0.00      0.00         6
                                           Bandwagon       0.00      0.00      0.00         1
-                              Name calling/Labeling       0.63      0.44      0.52        61
+                              Name calling/Labeling       0.44      0.61      0.51        61
                                Reductio ad hitlerum       0.00      0.00      0.00         3
            Presenting Irrelevant Data (Red Herring)       0.00      0.00      0.00         9
                                          Repetition       0.00      0.00      0.00         2
@@ -49,9 +49,9 @@ Misrepresentation of Someone's Position (Straw Man)       0.00      0.00      0.
                                         Flag-waving       0.00      0.00      0.00         6
                           Causal Oversimplification       0.00      0.00      0.00        13
 
-                                          micro avg       0.55      0.37      0.44       329
-                                          macro avg       0.21      0.12      0.14       329
-                                       weighted avg       0.45      0.37      0.39       329
-                                        samples avg       0.46      0.33      0.36       329
+                                          micro avg       0.45      0.42      0.44       329
+                                          macro avg       0.12      0.12      0.10       329
+                                       weighted avg       0.35      0.42      0.36       329
+                                        samples avg       0.43      0.37      0.37       329
 
-[CRITICAL] - PORGRESS - 06-03-2023 16:37:12 - Inference Complete
+[CRITICAL] - PORGRESS - 07-03-2023 16:51:12 - Inference Complete
