@@ -9,21 +9,42 @@ from torch.nn import BCEWithLogitsLoss, CrossEntropyLoss
 from transformers import AutoModel, AutoConfig, AutoModelForSequenceClassification
 from transformers.modeling_outputs import SequenceClassifierOutput
 
+# https://stackoverflow.com/questions/74297955/how-to-remove-layers-in-huggingfaces-transformers-bert-pre-trained-models
+# def deleteLayers(model):  # must pass in the full bert model
+#     embeddingLayer = model.bert.embeddings
+#     encoderLayer = model.bert.encoder
+#     poolerLayer = model.bert.pooler
+#     newModuleList = nn.ModuleList()
+
+#     newModuleList.append(embeddingLayer)
+#     newModuleList.append(encoderLayer)
+#     newModuleList.append(poolerLayer)
+#     # Ignoring classifier and dropout layer
+#     assert newModuleList == model.bert # False
+#     return newModuleList
+
+# model = deleteLayers(model)
+
 class Propaganda_Detection(nn.Module):
-    def __init__(self, checkpoint_model, num_tags, device):
+    def __init__(self, checkpoint_model, num_tags, device, hyper_params):
     
         super(Propaganda_Detection, self).__init__()
 
         self.num_labels = num_tags
         self.device = device
-        self.model = AutoModel.from_pretrained(
-            checkpoint_model,
-            config=AutoConfig.from_pretrained(
+        config=AutoConfig.from_pretrained(
                 checkpoint_model, 
                 output_attentions=True,
                 output_hidden_states=True)
+        if hyper_params['model_run'] == 'RUBERT':
+            load_model = AutoModelForSequenceClassification.from_pretrained(checkpoint_model, config=config)
+            # Removing the dropout layer and classifier layer
+            self.model = load_model.bert
+        self.model = AutoModel.from_pretrained(
+            checkpoint_model,
+            config=config,
             )
-            
+
         # self.model = AutoModelForSequenceClassification.from_pretrained(
         #     checkpoint_model,
         #     num_labels = num_tags

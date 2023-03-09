@@ -183,6 +183,9 @@ if __name__ == '__main__':
         elif hyper_params['model_run'] == 'mBERT':
             hyper_params['model_type'] = 'bert-base-multilingual-cased'
             hyper_params['tokenizer_type'] = 'bert-base-multilingual-cased'
+        elif hyper_params['model_run'] == 'RUBERT':
+            hyper_params['model_type'] = './Model_Files/RUBERT-checkpoint'
+            hyper_params['tokenizer_type'] = './Model_Files/RUBERT-checkpoint'
         elif hyper_params['model_run'] == 'XLM_RoBerta':
             hyper_params['model_type'] = 'xlm-roberta-base'
             hyper_params['tokenizer_type'] = 'xlm-roberta-base'
@@ -252,7 +255,7 @@ def run_model(hyper_params, logger_object, paths):
     if hyper_params['training']:
 
         tokenizer = AutoTokenizer.from_pretrained(checkpoint_tokenizer, do_lower_case = False)
-        model = Propaganda_Detection(checkpoint_model=checkpoint_model, num_tags=len(techniques), device=device)
+        model = Propaganda_Detection(checkpoint_model=checkpoint_model, num_tags=len(techniques), device=device, hyper_params=hyper_params)
         model = model.to(device)
         print('##################################################')
 
@@ -329,8 +332,8 @@ run_model(hyper_params, logger_object, paths)
 
 script = """
 python3 main.py \
-    --domain_type MEMES \
-    --model_run BERT_MEMES \
+    --domain_type CS \
+    --model_run RUBERT \
     --model_type default \
     --tokenizer_type default \
     --max_seq_length 256 \
