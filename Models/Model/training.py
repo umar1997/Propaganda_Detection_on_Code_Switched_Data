@@ -235,10 +235,35 @@ class Training:
         
             torch.save(self.checkpoint, path + '/' + self.hyper_params['model_run'] + '.pt')
             self.tokenizer.save_pretrained(path + '/' + self.hyper_params['model_run']+ '_tokenizer/')
+
+    def save_intermediate(self,):
+        if not self.hyper_params["debugging"]:
+            filename = self.hyper_params['model_run']
+            path = os.getcwd() + '/Switch_Files/'
+
+            self.checkpoint['model'] = self.model.state_dict()
+            # Delete existing files
+            if os.path.isfile(path + 'INTERMEDIATE.pt'):
+                os.remove(path + 'INTERMEDIATE.pt')
+            if os.path.exists(path + '/INTERMEDIATE' + '_tokenizer/'):
+                shutil.rmtree(path + '/INTERMEDIATE' + '_tokenizer/')
+
+            # Save new files
+            if self.hyper_params['step'] == 'Last':
+                torch.save(self.checkpoint, path + '/' + self.hyper_params['model_run'] + '.pt')
+                self.tokenizer.save_pretrained(path + '/' + self.hyper_params['model_run'] + '_tokenizer/')
+            else:
+                torch.save(self.checkpoint, path + '/INTERMEDIATE' + '.pt')
+                self.tokenizer.save_pretrained(path + '/INTERMEDIATE' + '_tokenizer/')
+
+    
     
     def run(self,):
     
         optimizer, scheduler = self.optimizer_and_lr_scheduler()
         self.training_and_validation(optimizer, scheduler)
-        self.save_model()
+        if self.hyper_params['mode'] == 'SWITCHES':
+            self.save_intermediate()
+        else:
+            self.save_model()
 

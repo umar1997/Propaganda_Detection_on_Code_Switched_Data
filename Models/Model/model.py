@@ -32,6 +32,7 @@ class Propaganda_Detection(nn.Module):
 
         self.num_labels = num_tags
         self.device = device
+
         config=AutoConfig.from_pretrained(
                 checkpoint_model, 
                 output_attentions=True,
@@ -40,10 +41,11 @@ class Propaganda_Detection(nn.Module):
             load_model = AutoModelForSequenceClassification.from_pretrained(checkpoint_model, config=config)
             # Removing the dropout layer and classifier layer
             self.model = load_model.bert
-        self.model = AutoModel.from_pretrained(
-            checkpoint_model,
-            config=config,
-            )
+        else:
+            self.model = AutoModel.from_pretrained(
+                checkpoint_model,
+                config=config,
+                )
 
         # self.model = AutoModelForSequenceClassification.from_pretrained(
         #     checkpoint_model,

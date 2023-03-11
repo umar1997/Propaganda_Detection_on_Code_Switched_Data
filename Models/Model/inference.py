@@ -1,3 +1,4 @@
+import os
 import re
 import json
 import string
@@ -30,8 +31,8 @@ class Inferencer:
 
     def get_model_and_tokenizer(self,):
 
-        self.model = Propaganda_Detection(checkpoint_model=self.checkpoint_model, num_tags=len(self.techniques), device=self.device)
-        path = self.paths['Model_Files'] + self.hyper_params['model_run'] + '/'
+        self.model = Propaganda_Detection(checkpoint_model=self.checkpoint_model, num_tags=len(self.techniques), device=self.device, hyper_params=self.hyper_params)
+        path = os.getcwd() + '/Switch_Files/'
         checkpoint = torch.load(path + self.hyper_params['model_run'] + '.pt')
         self.model.load_state_dict(checkpoint['model'])
         self.tokenizer = AutoTokenizer.from_pretrained(path + self.hyper_params['model_run'] +'_tokenizer/')
@@ -120,5 +121,4 @@ class Inferencer:
             foldername = self.hyper_params['model_run']
             path = self.paths['Model_Files'] + foldername
             shutil.copy2(self.hyper_params['log_file'], path)
-
         return 
