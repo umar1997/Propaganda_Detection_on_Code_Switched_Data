@@ -73,6 +73,7 @@ PyYAML==6.0
 pyzmq==25.0.0
 qtconsole==5.4.0
 QtPy==2.3.0
+regex==2022.9.13
 rfc3339-validator==0.1.4
 rfc3986-validator==0.1.1
 seaborn==0.12.2
