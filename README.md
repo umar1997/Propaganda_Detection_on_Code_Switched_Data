@@ -9,8 +9,7 @@ the opinions and mindset of a target audience or the public in general towards a
 ### CONTRIBUTIONS
 1. **Formulation of new NLP Task:** We are the first to formulate the new NLP problem of
 detecting propaganda techniques in code-switched data.
-2. **New Dataset:** We built and annotated a new corpus for this specific problem in the languages
-English and Roman Urdu.
+2. **New Dataset:** We build and annotate a new corpus for this specific problem in English and Roman Urdu.
 3. **Evaluating different NLP Models:** We run various baseline models on our newly created
 dataset and evaluate their performance.
 4. **Developed a Web-based Platform:** We design and create a new website platform with a
