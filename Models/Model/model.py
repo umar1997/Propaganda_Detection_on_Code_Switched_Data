@@ -37,6 +37,7 @@ class Propaganda_Detection(nn.Module):
                 checkpoint_model, 
                 output_attentions=True,
                 output_hidden_states=True)
+                # use_fast=False) # Added this for Deberta_V3
         if hyper_params['model_run'] == 'RUBERT':
             load_model = AutoModelForSequenceClassification.from_pretrained(checkpoint_model, config=config)
             # Removing the dropout layer and classifier layer
@@ -44,7 +45,7 @@ class Propaganda_Detection(nn.Module):
         else:
             self.model = AutoModel.from_pretrained(
                 checkpoint_model,
-                config=config,
+                config=config
                 )
 
         # self.model = AutoModelForSequenceClassification.from_pretrained(

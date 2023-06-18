@@ -32,7 +32,8 @@ class Inferencer:
     def get_model_and_tokenizer(self,):
 
         self.model = Propaganda_Detection(checkpoint_model=self.checkpoint_model, num_tags=len(self.techniques), device=self.device, hyper_params=self.hyper_params)
-        path = os.getcwd() + '/Switch_Files/'
+        # path = os.getcwd() + '/Switch_Files/'
+        path = os.getcwd() + '/Model_Files/' + self.hyper_params['model_run'] + '/'
         checkpoint = torch.load(path + self.hyper_params['model_run'] + '.pt')
         self.model.load_state_dict(checkpoint['model'])
         self.tokenizer = AutoTokenizer.from_pretrained(path + self.hyper_params['model_run'] +'_tokenizer/')
@@ -117,7 +118,7 @@ class Inferencer:
             self.logger_results.info('Validation Hamming Score: {}  |  Validation Exact Match Ratio: {} |  Validation Accuracy Score: {}'.format(hamming_score, exact_match_ratio, accuracy_score))
             self.logger_results.info('Classification Report:')
             self.logger_results.info('\n{}'.format(classificationReport))
-
+            breakpoint()
             foldername = self.hyper_params['model_run']
             path = self.paths['Model_Files'] + foldername
             shutil.copy2(self.hyper_params['log_file'], path)

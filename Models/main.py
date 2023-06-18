@@ -153,6 +153,9 @@ if __name__ == '__main__':
         elif hyper_params['model_run'] == 'XLM_RoBerta_MEMES':
             hyper_params['model_type'] = 'xlm-roberta-base'
             hyper_params['tokenizer_type'] = 'xlm-roberta-base'
+        elif hyper_params['model_run'] == 'DEBERTA_V3_MEMES':
+            hyper_params['model_type'] = 'microsoft/deberta-v3-large'
+            hyper_params['tokenizer_type'] = 'microsoft/deberta-v3-large'
         else:
             raise Exception('Model and Domain Type don\'t match')
 
@@ -169,6 +172,9 @@ if __name__ == '__main__':
         elif hyper_params['model_run'] == 'XLM_RoBerta_ENGLISH':
             hyper_params['model_type'] = 'xlm-roberta-base'
             hyper_params['tokenizer_type'] = 'xlm-roberta-base'
+        elif hyper_params['model_run'] == 'DEBERTA_V3_ENGLISH':
+            hyper_params['model_type'] = 'microsoft/deberta-v3-large'
+            hyper_params['tokenizer_type'] = 'microsoft/deberta-v3-large'
         else:
             raise Exception('Model and Domain Type don\'t match')
 
@@ -191,6 +197,9 @@ if __name__ == '__main__':
         elif hyper_params['model_run'] == 'XLM_RoBerta_Roman_Urdu':
             hyper_params['model_type'] = 'Aimlab/xlm-roberta-roman-urdu-finetuned'
             hyper_params['tokenizer_type'] = 'Aimlab/xlm-roberta-roman-urdu-finetuned'
+        elif hyper_params['model_run'] == 'DEBERTA_V3':
+            hyper_params['model_type'] = 'microsoft/deberta-v3-small'
+            hyper_params['tokenizer_type'] = 'microsoft/deberta-v3-small'
         else:
             raise Exception('Model and Domain Type don\'t match')
 
@@ -326,13 +335,15 @@ run_model(hyper_params, logger_object, paths)
     # 9. XLM_RoBerta                                    'xlm-roberta-base'
     # 10. RUBERT
     # 11. XLM_RoBerta_Roman_Urdu                        'Aimlab/xlm-roberta-roman-urdu-finetuned'
+    # 12. DEBERTA_V3                                    'microsoft/deberta-v3-base'                
+    # 'microsoft/deberta-base'
     
     # nvidia-smi | grep 'python' | awk '{ print $5 }' | xargs -n1 kill -9
 
 script = """
 python3 main.py \
     --domain_type CS \
-    --model_run RUBERT \
+    --model_run DEBERTA_V3 \
     --model_type default \
     --tokenizer_type default \
     --max_seq_length 256 \

@@ -41,7 +41,7 @@ def get_accuracy_score(expected, predicted):
     return accuracy_score
 
 def get_classification_report(expected, predicted, labels):
-    return classification_report(expected, predicted, target_names=labels)
+    return classification_report(expected, predicted, target_names=labels, zero_division=1)
 
 def get_hamming_score(expected, predicted):
     '''

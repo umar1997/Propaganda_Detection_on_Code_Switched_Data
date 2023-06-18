@@ -262,8 +262,9 @@ class Training:
     
         optimizer, scheduler = self.optimizer_and_lr_scheduler()
         self.training_and_validation(optimizer, scheduler)
-        if self.hyper_params['mode'] == 'SWITCHES':
-            self.save_intermediate()
+        if 'mode' in self.hyper_params:
+            if self.hyper_params['mode'] == 'SWITCHES':
+                self.save_intermediate()
         else:
             self.save_model()
 

@@ -14,9 +14,10 @@ ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
 # This mechanism uses a password.
 # Get it from cli args or a file or hard code it, whatever works best for you
-password = "**********"
+password = "W*************I"
 
-for ip in range(11, 80):
+# range(11, 80)
+for ip in range(60, 100):
     hostname_ = "10.127.30." + str(ip)
     try:
         ssh_client.connect(hostname=hostname_,
